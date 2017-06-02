@@ -1,0 +1,11 @@
+1. Facebook chat plugin: Need to modify these file if need to move. 
+
+js/my_chat.js
+
+
+2. Visitor analytics :  
+
+js/analytics/client.js
+
+
+3. social_stream/social_stream.js
