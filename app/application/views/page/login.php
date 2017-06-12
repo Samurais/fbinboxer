@@ -35,7 +35,7 @@
   <body class="login-page">
     <div class="login-box">
       <div class="login-logo">
-        <center><a href="<?php echo site_url();?>"><img style="max-width: 50%" src="<?php echo base_url();?>assets/images/logo_pdf.png" alt="<?php echo $this->config->item('product_name');?>" class="img-responsive"></a></center><br/>
+        <center><a href="<?php echo site_url();?>"><img style="max-width: 50%" src="<?php echo base_url();?>assets/images/logo.png" alt="<?php echo $this->config->item('product_name');?>" class="img-responsive"></a></center><br/>
        </div><!-- /.login-logo -->
       <div class="login-box-body">
         <?php 
@@ -120,5 +120,6 @@
         });
       });
     </script>
+    <?php $this->load->view("include/fb_px"); ?> 
   </body>
 </html>

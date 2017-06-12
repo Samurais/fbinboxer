@@ -35,7 +35,6 @@ class facebook_ex_autoreply extends Home
     {
         $data['body'] = 'facebook_ex/auto_reply/auto_reply_page_list';
         $data['page_title'] = $this->lang->line('Auto reply - Page list');
-        // $data["page_info"] = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("user_id"=>$this->user_id,"facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"))));
         $page_info = array();
         $page_list = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("user_id"=>$this->user_id,"facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"))),"","","","","page_name asc");
         if(!empty($page_list))
@@ -213,7 +212,7 @@ class facebook_ex_autoreply extends Home
                         $button = "<button class='btn btn-sm btn-danger'>Enabled</button> &nbsp;&nbsp; <button class='btn btn-sm btn-info edit_reply_info' table_id='".$existing_data[$value['id']]."'><i class='fa fa-edit'></i> Edit</button>";
                     }
                     else
-                        $button = "<button class='btn btn-sm btn-success enable_auto_commnet' page_table_id='".$table_id."' post_id='".$value['id']."'>Enable auto reply</button>";
+                        $button = "<button class='btn btn-sm btn-success enable_auto_commnet' manual_enable='no' page_table_id='".$table_id."' post_id='".$value['id']."'>Enable auto reply</button>";
                     $str .= "
                                 <tr>
                                     <td>".$i."</td>
@@ -242,6 +241,59 @@ class facebook_ex_autoreply extends Home
 
         echo json_encode($respnse);
 
+    }
+
+
+    public function checking_post_id()
+    {
+        
+        $post_id = $this->input->post('post_id');
+        $page_table_id = $this->input->post('page_table_id');
+        $page_info = $this->basic->get_data('facebook_rx_fb_page_info',array('where'=>array('id'=>$page_table_id)));
+        $page_name = $page_info[0]['page_name'];
+        $access_token = $page_info[0]['page_access_token'];
+
+        try
+        {
+            $post_info = $this->fb_rx_login->get_post_info_by_id($post_id,$access_token);
+            if(isset($post_info['error']))
+            {
+                $response['error'] = 'yes';
+                $response['error_msg'] = $post_info['error']['message'];
+            }
+            else
+                $response['error'] = 'no';
+
+        }
+        catch(Exception $e)
+        {
+            $response['error'] = 'yes';
+            $response['error_msg'] = $e->getMessage();
+        }
+        echo json_encode($response);
+    }
+
+
+    public function get_tableid_by_postid()
+    {
+        $page_table_id = $this->input->post('page_table_id');
+        $post_id = $this->input->post('post_id');
+
+        $where['where'] = array(
+            'user_id' => $this->user_id,
+            'page_info_table_id' => $page_table_id,
+            'post_id' => $post_id
+            );
+
+        $table_info = $this->basic->get_data('facebook_ex_autoreply',$where,'','',1);
+        if(empty($table_info))
+            $respnse['error'] = 'yes';
+        else
+        {
+            $respnse['error'] = 'no';
+            $respnse['table_id'] = $table_info[0]['id'];
+        }
+        echo json_encode($respnse);
     }
 
 
@@ -281,27 +333,71 @@ class facebook_ex_autoreply extends Home
         $page_info = $this->basic->get_data('facebook_rx_fb_page_info',array('where'=>array('id'=>$auto_reply_page_id)));
         $page_name = $page_info[0]['page_name'];
 
-        try{
+        // $manual_reply_description = "";
 
-            $post_list = $this->fb_rx_login->get_postlist_from_fb_page($page_info[0]['page_id'],$page_info[0]['page_access_token']);
-            if(isset($post_list['data']) && !empty($post_list['data']))
+        if($manual_enable == 'yes')
+        {
+            try
             {
-                foreach($post_list['data'] as $value)
+                $post_info = $this->fb_rx_login->get_post_info_by_id($auto_reply_post_id,$page_info[0]['page_access_token']);
+
+                if(isset($post_info['error']))
                 {
-                    if($value['id'] == $auto_reply_post_id)
+                    $response['error'] = 'yes';
+                    $response['error_msg'] = $post_info['error']['message'];
+                }
+                else
+                {
+                    $post_created_at = isset($post_info[$auto_reply_post_id]['created_time']) ? $post_info[$auto_reply_post_id]['created_time'] : "";
+                    if(isset($post_info[$auto_reply_post_id]['message']))
+                        $post_description = isset($post_info[$auto_reply_post_id]['message']) ? $post_info[$auto_reply_post_id]['message'] : "";
+                    else if(isset($post_info[$auto_reply_post_id]['name']))
+                        $post_description = isset($post_info[$auto_reply_post_id]['name']) ? $post_info[$auto_reply_post_id]['name'] : "";
+                    else
+                        $post_description = isset($post_info[$auto_reply_post_id]['description']) ? $post_info[$auto_reply_post_id]['description'] : "";
+                }
+
+            }
+            catch(Exception $e)
+            {
+                $post_created_at = "";
+                $post_description = "";
+            }
+        }
+        else
+        {
+            try{
+
+                $post_list = $this->fb_rx_login->get_postlist_from_fb_page($page_info[0]['page_id'],$page_info[0]['page_access_token']);
+                if(isset($post_list['data']) && !empty($post_list['data']))
+                {
+                    foreach($post_list['data'] as $value)
                     {
-                        $post_created_at = $value['created_time'];
-                        $post_description = isset($value['message']) ? $value['message'] : '';
-                        break;
+                        if($value['id'] == $auto_reply_post_id)
+                        {
+                            $post_created_at = $value['created_time'];
+                            $post_description = isset($value['message']) ? $value['message'] : '';
+                            // $manual_reply_description = "found";
+                            break;
+                        }
                     }
                 }
             }
+            catch(Exception $e)
+            {            
+                $post_created_at = "";
+                $post_description = "";
+            }
         }
-        catch(Exception $e)
-        {            
-            $post_created_at = "";
-            $post_description = "";
-        }
+
+
+        // if($manual_reply_description == '')
+        // {
+        //     $return['status'] = 0;
+        //     $return['message'] = "<div class='alert alert-danger'>The post ID you have given is not associated with page (".$page_name.")</div>";
+        //     echo json_encode($return);
+        //     exit();
+        // }
 
         $post_description = $this->db->escape($post_description);
         
@@ -309,14 +405,28 @@ class facebook_ex_autoreply extends Home
         $return = array();
         $facebook_rx_fb_user_info = $this->session->userdata("facebook_rx_fb_user_info");
         $date_time = date("Y-m-d H:i:s");
-        $nofilter_word_found_text = trim($nofilter_word_found_text);
+
+        $nofilter_array['comment_reply'] = trim($nofilter_word_found_text);
+        $nofilter_array['private_reply'] = trim($nofilter_word_found_text_private);
+        $no_filter_array = array();
+        array_push($no_filter_array, $nofilter_array);
+        $nofilter_word_found_text = json_encode($no_filter_array);
         $nofilter_word_found_text = $this->db->escape($nofilter_word_found_text);
+
+        $page_name = $this->db->escape($page_name);
+
         if($message_type == 'generic')
         {
-            $auto_reply_text = $this->db->escape($generic_message); 
+            $generic_message_array['comment_reply'] = trim($generic_message);
+            $generic_message_array['private_reply'] = trim($generic_message_private);
+            $generic_array = array();
+            array_push($generic_array, $generic_message_array);
+            $auto_reply_text = '';
+            $auto_reply_text = json_encode($generic_array);
+            $auto_reply_text = $this->db->escape($auto_reply_text); 
 
-            $sql = "INSERT INTO facebook_ex_autoreply (facebook_rx_fb_user_info_id,user_id,auto_reply_campaign_name,page_info_table_id,page_name,post_id,post_created_at,post_description,reply_type,auto_reply_text,last_updated_at,auto_private_reply_done_ids,auto_reply_done_info,nofilter_word_found_text) VALUES ('$facebook_rx_fb_user_info','$this->user_id','$auto_campaign_name','$auto_reply_page_id','$page_name','$auto_reply_post_id','$post_created_at',$post_description,'$message_type',$auto_reply_text,'$date_time','[]','[]',$nofilter_word_found_text)
-            ON DUPLICATE KEY UPDATE auto_reply_text=$auto_reply_text,reply_type='$message_type',auto_reply_campaign_name='$auto_campaign_name',nofilter_word_found_text=$nofilter_word_found_text";
+            $sql = "INSERT INTO facebook_ex_autoreply (facebook_rx_fb_user_info_id,user_id,auto_reply_campaign_name,page_info_table_id,page_name,post_id,post_created_at,post_description,reply_type,auto_like_comment,multiple_reply,comment_reply_enabled,auto_reply_text,last_updated_at,auto_private_reply_done_ids,auto_reply_done_info,nofilter_word_found_text) VALUES ('$facebook_rx_fb_user_info','$this->user_id','$auto_campaign_name','$auto_reply_page_id',$page_name,'$auto_reply_post_id','$post_created_at',$post_description,'$message_type','$auto_like_comment','$multiple_reply','$comment_reply_enabled',$auto_reply_text,'$date_time','[]','[]',$nofilter_word_found_text)
+            ON DUPLICATE KEY UPDATE auto_reply_text=$auto_reply_text,reply_type='$message_type',auto_like_comment='$auto_like_comment',multiple_reply='multiple_reply',comment_reply_enabled='$comment_reply_enabled',auto_reply_campaign_name='$auto_campaign_name',nofilter_word_found_text=$nofilter_word_found_text";
         }
         else
         {
@@ -327,11 +437,17 @@ class facebook_ex_autoreply extends Home
                 $filter_word_text = $this->input->post($filter_word);
                 $filter_message = 'filter_message_'.$i;
                 $filter_message_text = $this->input->post($filter_message);
-                if($filter_word_text != '' && $filter_message_text != '')
+
+                // added 25-04-2017
+                $comment_message = 'comment_reply_msg_'.$i;
+                $comment_message_text = $this->input->post($comment_message);
+
+                if($filter_word_text != '' && ($filter_message_text != '' || $comment_message_text != ''))
                 {
                     // $auto_reply_text_array[$filter_word_text] = $filter_message_text;
                     $data['filter_word'] = trim($filter_word_text);
                     $data['reply_text'] = trim($filter_message_text);
+                    $data['comment_reply_text'] = trim($comment_message_text);
                     array_push($auto_reply_text_array, $data);
                 }
             }
@@ -339,8 +455,8 @@ class facebook_ex_autoreply extends Home
             $auto_reply_text = json_encode($auto_reply_text_array);
             $auto_reply_text = $this->db->escape($auto_reply_text);
 
-            $sql = "INSERT INTO facebook_ex_autoreply (facebook_rx_fb_user_info_id,user_id,auto_reply_campaign_name,page_info_table_id,page_name,post_id,post_created_at,post_description,reply_type,auto_reply_text,last_updated_at,auto_private_reply_done_ids,auto_reply_done_info,nofilter_word_found_text) VALUES ('$facebook_rx_fb_user_info','$this->user_id','$auto_campaign_name','$auto_reply_page_id','$page_name','$auto_reply_post_id','$post_created_at',$post_description,'$message_type',$auto_reply_text,'$date_time','[]','[]',$nofilter_word_found_text)
-            ON DUPLICATE KEY UPDATE auto_reply_text=$auto_reply_text,reply_type='$message_type',auto_reply_campaign_name='$auto_campaign_name',nofilter_word_found_text=$nofilter_word_found_text";
+            $sql = "INSERT INTO facebook_ex_autoreply (facebook_rx_fb_user_info_id,user_id,auto_reply_campaign_name,page_info_table_id,page_name,post_id,post_created_at,post_description,reply_type,auto_like_comment,multiple_reply,comment_reply_enabled,auto_reply_text,last_updated_at,auto_private_reply_done_ids,auto_reply_done_info,nofilter_word_found_text) VALUES ('$facebook_rx_fb_user_info','$this->user_id','$auto_campaign_name','$auto_reply_page_id',$page_name,'$auto_reply_post_id','$post_created_at',$post_description,'$message_type','$auto_like_comment','$multiple_reply','$comment_reply_enabled',$auto_reply_text,'$date_time','[]','[]',$nofilter_word_found_text)
+            ON DUPLICATE KEY UPDATE auto_reply_text=$auto_reply_text,reply_type='$message_type',auto_like_comment='$auto_like_comment',multiple_reply='$multiple_reply',comment_reply_enabled='$comment_reply_enabled',auto_reply_campaign_name='$auto_campaign_name',nofilter_word_found_text=$nofilter_word_found_text";
         }
 
         
@@ -359,6 +475,7 @@ class facebook_ex_autoreply extends Home
         }
         echo json_encode($return);
     }
+
 
     public function ajax_autoreply_delete()
     {
@@ -383,17 +500,33 @@ class facebook_ex_autoreply extends Home
         $table_id = $this->input->post('table_id');
         $info = $this->basic->get_data('facebook_ex_autoreply',array('where'=>array('id'=>$table_id)));
 
-        if($info[0]['reply_type'] == 'generic')
-            $reply_content = $info[0]['auto_reply_text'];
+        if($info[0]['reply_type'] == 'generic'){
+            $reply_content = json_decode($info[0]['auto_reply_text']);
+            if(!is_array($reply_content))
+            {
+                $reply_content[0]['comment_reply'] = "";
+                $reply_content[0]['private_reply'] = $info[0]['auto_reply_text'];
+            }
+        }
         else
             $reply_content = json_decode($info[0]['auto_reply_text']);
 
+        $nofilter_word_text = json_decode($info[0]['nofilter_word_found_text']);
+        if(!is_array($nofilter_word_text))
+        {
+            $nofilter_word_text[0]['comment_reply'] = '';
+            $nofilter_word_text[0]['private_reply'] = $info[0]['nofilter_word_found_text'];
+        }
+
         $respnse['reply_type'] = $info[0]['reply_type'];
+        $respnse['comment_reply_enabled'] = $info[0]['comment_reply_enabled'];
+        $respnse['multiple_reply'] = $info[0]['multiple_reply'];
+        $respnse['auto_like_comment'] = $info[0]['auto_like_comment'];
         $respnse['auto_reply_text'] = $reply_content;
         $respnse['edit_auto_reply_page_id'] = $info[0]['page_info_table_id'];
         $respnse['edit_auto_reply_post_id'] = $info[0]['post_id'];
         $respnse['edit_auto_campaign_name'] = $info[0]['auto_reply_campaign_name'];
-        $respnse['edit_nofilter_word_found_text'] = $info[0]['nofilter_word_found_text'];
+        $respnse['edit_nofilter_word_found_text'] = $nofilter_word_text;
 
         echo json_encode($respnse);
     }
@@ -414,8 +547,14 @@ class facebook_ex_autoreply extends Home
 
         if($edit_message_type == 'generic')
         {
-            // $auto_reply_text = $this->db->escape($edit_generic_message); 
-            $auto_reply_text = $edit_generic_message; 
+            // $auto_reply_text = $edit_generic_message;
+
+            $generic_message_array['comment_reply'] = trim($edit_generic_message);
+            $generic_message_array['private_reply'] = trim($edit_generic_message_private);
+            $generic_array = array();
+            array_push($generic_array, $generic_message_array);
+            $auto_reply_text = json_encode($generic_array);
+            // $auto_reply_text = $this->db->escape($generic_message_text);
         }
         else
         {
@@ -426,23 +565,36 @@ class facebook_ex_autoreply extends Home
                 $filter_word_text = $this->input->post($filter_word);
                 $filter_message = 'edit_filter_message_'.$i;
                 $filter_message_text = $this->input->post($filter_message);
-                if($filter_word_text != '' && $filter_message_text != '')
+
+                // added 25-04-2017
+                $comment_message = 'edit_comment_reply_msg_'.$i;
+                $comment_message_text = $this->input->post($comment_message);
+
+                if($filter_word_text != '' && ($filter_message_text != '' || $comment_message_text != ''))
                 {
                     // $auto_reply_text_array[$filter_word_text] = $this->db->escape($filter_message_text);
                     $data['filter_word'] = trim($filter_word_text);
                     $data['reply_text'] = trim($filter_message_text);
+                    $data['comment_reply_text'] = trim($comment_message_text);
                     array_push($auto_reply_text_array, $data);
                 }
             }
             $auto_reply_text = json_encode($auto_reply_text_array);
         }
 
+        $no_filter_array['comment_reply'] = trim($edit_nofilter_word_found_text);
+        $no_filter_array['private_reply'] = trim($edit_nofilter_word_found_text_private);
+        $nofilter_array = array();
+        array_push($nofilter_array, $no_filter_array);
 
         $data = array(
             'auto_reply_text' => $auto_reply_text,
             'reply_type' => $edit_message_type,
             'auto_reply_campaign_name' => $edit_auto_campaign_name,
-            'nofilter_word_found_text' => trim($edit_nofilter_word_found_text)
+            'nofilter_word_found_text' => json_encode($nofilter_array),
+            'comment_reply_enabled' => $edit_comment_reply_enabled,
+            'multiple_reply' => $edit_multiple_reply,
+            'auto_like_comment' => $edit_auto_like_comment
             );
         $where = array(
             'user_id' => $this->user_id,
@@ -538,9 +690,11 @@ class facebook_ex_autoreply extends Home
                              <th>Name</th>
                              <th>Comment</th>
                              <th>Comment Time</th>
-                             <th>Reply Message</th>
+                             <th>Private Reply Message</th>
+                             <th>Comment Reply Message</th>
                              <th>Reply Time</th>
-                             <th>Status</th>
+                             <th>Private Reply Status</th>
+                             <th>Comment Reply Status</th>
                          </tr>
                      </thead>
                      <tbody>';
@@ -550,13 +704,16 @@ class facebook_ex_autoreply extends Home
             foreach($info as $value)
             {
                 $comment_time = date('Y-m-d H:i:s',strtotime($value['comment_time']));
+                $comment_status = isset($value['reply_status_comment']) ? $value['reply_status_comment']:"";
                 $str .= '<tr>
                             <td>'.$value['name'].'</td>
                             <td>'.$value['comment_text'].'</td>
                             <td>'.$comment_time.'</td>
                             <td>'.$value['reply_text'].'</td>
+                            <td>'.$value['comment_reply_text'].'</td>
                             <td>'.$value['reply_time'].'</td>
                             <td>'.$value['reply_status'].'</td>
+                            <td>'.$comment_status.'</td>
                         </tr>';
             }
 

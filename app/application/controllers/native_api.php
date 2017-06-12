@@ -216,6 +216,7 @@ class native_api extends Home
     /******We are replying 50 post's comment by each call. and updating the status as processing. So we can run the cron job in a small time interval,  We can run it by 15 minutes. *******/
 
 
+
     public function send_auto_private_reply_on_comment_on_fbexciter($api_key="")
     {
 
@@ -224,11 +225,11 @@ class native_api extends Home
         /***    Get post info where we need to check for auto reply ***/
         
         /**     post which posted last 5 days ago   **/
-        $last_date = date("Y-m-d H:i:s",strtotime("-15 days"));
+        $last_date = date("Y-m-d H:i:s",strtotime("-100 days"));
         
-        $where['where']=array('auto_private_reply_status'=>"0","auto_private_reply_count <="=>"5000","last_updated_at >="=>$last_date);
+        $where['where']=array('auto_private_reply_status'=>"0","auto_private_reply_count <="=>"100000","last_updated_at >="=>$last_date);
                     
-        $select="facebook_ex_autoreply.id as column_id,post_id,auto_private_reply_done_ids,page_access_token,auto_reply_text,facebook_ex_autoreply.facebook_rx_fb_user_info_id,reply_type,auto_reply_done_info,nofilter_word_found_text";
+        $select="facebook_ex_autoreply.id as column_id,post_id,auto_private_reply_done_ids,page_id,page_access_token,auto_reply_text,facebook_ex_autoreply.facebook_rx_fb_user_info_id,multiple_reply,comment_reply_enabled,reply_type,auto_like_comment,auto_reply_done_info,nofilter_word_found_text";
         
         $join=array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.id=facebook_ex_autoreply.page_info_table_id,left");
         
@@ -247,7 +248,7 @@ class native_api extends Home
             $this->db->where_in("id",$updating_post_column);
             $this->db->update("facebook_ex_autoreply",array("auto_private_reply_status"=>"1"));
         }
-        
+
         
         /***    Start Sending Private reply ****/
         $config_id_database=array();
@@ -255,14 +256,41 @@ class native_api extends Home
         foreach($post_info as $info){
         
             /***    get all comment from post **/
+            $auto_like_comment = $info['auto_like_comment'];
             $post_id=   $info['post_id'];
+            $page_id = $info['page_id'];
             $post_access_token = $info['page_access_token'];
             $previous_replied_list= json_decode($info['auto_private_reply_done_ids']);
-            $previous_replied_info= json_decode($info['auto_reply_done_info']);
+            $previous_replied_info= json_decode($info['auto_reply_done_info'],true);
+
+            // added by mostofa on 27-04-2017 to prevent duplicate reply
+            $previous_replied_names = array();
+            foreach($previous_replied_info as $replied_info)
+            {
+                array_push($previous_replied_names, $replied_info['commenter_id']);
+            }
+
             $auto_reply_private_message_raw= $info['auto_reply_text'];
             $auto_reply_type= $info['reply_type'];
+
+            $default_reply_no_filter = json_decode($info['nofilter_word_found_text'],true);
+            if(is_array($default_reply_no_filter))
+            {
+                $default_reply_no_filter_comment = $default_reply_no_filter[0]['comment_reply'];
+                $default_reply_no_filter_private = $default_reply_no_filter[0]['private_reply'];
+            }
+            else
+            {
+                $default_reply_no_filter_comment = "";
+                $default_reply_no_filter_private = $info['nofilter_word_found_text'];
+            }
+
+
             
-            $default_reply_no_filter= $info['nofilter_word_found_text'];
+
+            $comment_reply_enabled = $info['comment_reply_enabled'];
+            $multiple_reply = $info['multiple_reply'];
+
             
             
             
@@ -284,124 +312,201 @@ class native_api extends Home
             $new_replied_list =array();
             $new_replied_info=array();
             
-            
             try{
                 $comment_list   = $this->fb_rx_login->get_all_comment_of_post($post_id,$post_access_token);
+                
             }
             catch(Exception $e){
                 $comment_list=array();
             }
-            
-            
+
             
             if(!isset($comment_list[$post_id]['comments'])) continue; 
             
             $new_replied_list= $previous_replied_list;
             $new_replied_info=$previous_replied_info;
-            
-            
+
             foreach($comment_list[$post_id]['comments']['data'] as $comment_info){
             
                  $comment_id        = $comment_info['id'];   
                  $comment_text      = $comment_info['message'];
 
                  $commenter_name    = $comment_info['from']['name'];
+                 $commenter_id  = $comment_info['from']['id'];
                  $commenter_name_array    = explode(' ', $commenter_name);
                  $commenter_last_name = array_pop($commenter_name_array);
                  $commenter_first_name = implode(' ', $commenter_name_array);
 
-                 $comment_time      = $comment_info['created_time'];
+                 $comment_time = $comment_info['created_time'];
                  
                  $auto_reply_private_message="";
+                 // added by mostofa on 26-04-2017
+                 $auto_reply_comment_message="";
+
                  
-                 
-                 /** If already Replied, dont sent again **/
-                 if(in_array($comment_id,$previous_replied_list)) continue;
-                 
-                 /**    If not sent, then sent him reply ***/
-                  $new_replied_list[]=$comment_id;
-                  
+                /** If already Replied, dont sent again **/
+                if(in_array($comment_id,$previous_replied_list)) continue;
+                // added by mostofa on 27-04-2017 to prevent duplicate reply
+                if($multiple_reply == 'no')
+                {                 
+                    if(in_array($commenter_id,$previous_replied_names)) continue;
+                }
+                // do not reply if the commenter is page itself
+                if($page_id==$commenter_id) continue;
+               
+                /**    If not sent, then sent him reply ***/
+                $new_replied_list[]=$comment_id;
+
+
+
                   if($auto_reply_type=='generic'){
-                        $auto_reply_private_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_private_message_raw);
+                        $auto_generic_reply__array=json_decode($auto_reply_private_message_raw,TRUE);
+                        if(is_array($auto_generic_reply__array))
+                        {
+                            $auto_generic_reply__array[0]['private_reply'] = $auto_generic_reply__array[0]['private_reply'];
+                            $auto_generic_reply__array[0]['comment_reply'] = $auto_generic_reply__array[0]['comment_reply'];
+                        }
+                        else
+                        {
+                            $auto_generic_reply__array[0]['private_reply'] = $auto_reply_private_message_raw;
+                            $auto_generic_reply__array[0]['comment_reply'] = "";
+                        }
+
+                        $auto_reply_private_message = str_replace('#LEAD_USER_NAME#',$commenter_name,$auto_generic_reply__array[0]['private_reply']);
+                        $auto_reply_private_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_private_message);
                         $auto_reply_private_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_private_message);
+                        // added by mostofa on 26-04-2017
+                        $auto_reply_comment_message = str_replace('#LEAD_USER_NAME#',$commenter_name,$auto_generic_reply__array[0]['comment_reply']);
+                        $auto_reply_comment_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_comment_message);
+                        $auto_reply_comment_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_comment_message);
                   }
+
                   
                   
-                  if($auto_reply_type=="filter"){
-                  
+                if($auto_reply_type=="filter"){
+
                     $auto_reply_private_message_array=json_decode($auto_reply_private_message_raw,TRUE);    
-                    
+
                     foreach($auto_reply_private_message_array as $message_info){
-                        
+
                         $filter_word= $message_info['filter_word'];
                         $filter_word = explode(",",$filter_word);
-                        
-                        
+
+
                         foreach($filter_word as $f_word){
                             $pos= stripos($comment_text,trim($f_word));
-                            
+
                             if($pos!==FALSE){
                                 $auto_reply_private_message_individual = $message_info['reply_text'];
-                                $auto_reply_private_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_private_message_individual);
-                                $auto_reply_private_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_private_message);
-                                break;
-                        }
-                            
-                    }   
-                    
-                    if($pos!==FALSE) break;
-                        
-                }
-                    
-                if($auto_reply_private_message=="" && $default_reply_no_filter!=""){
-                
-                    $auto_reply_private_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$default_reply_no_filter);
-                    $auto_reply_private_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_private_message);
-                }
-                
-              }
-              
-                  
-                  $comment_result_info=array(
-                                "id" => $comment_id,
-                                "comment_text" =>$comment_text,
-                                "name"      =>$commenter_name,
-                                "comment_time" =>$comment_time,
-                                "reply_time"   =>date("Y-m-d H:i:s"),
-                                "reply_text" => $auto_reply_private_message
-                 );
-                 
-         
-                 try{
-                    
-                    if($auto_reply_private_message!=""){
-                        $send_reply_info=$this->fb_rx_login->send_private_reply($auto_reply_private_message,$comment_id,$post_access_token);
+                                $auto_reply_comment_message_individual = $message_info['comment_reply_text'];
 
-                    sleep(rand(1,5));
-                        
-                    
-                    if(isset($send_reply_info['error'])){
-                        $comment_result_info['reply_status']= $send_reply_info['error']['message'];
+                                $auto_reply_private_message = str_replace('#LEAD_USER_NAME#',$commenter_name,$auto_reply_private_message_individual);
+                                $auto_reply_private_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_private_message);
+                                $auto_reply_private_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_private_message);
+
+                                // added by mostofa on 26-04-2017
+                                $auto_reply_comment_message = str_replace('#LEAD_USER_NAME#',$commenter_name,$auto_reply_comment_message_individual);
+                                $auto_reply_comment_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_comment_message);
+                                $auto_reply_comment_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_comment_message);
+                                break;
+                            }
+
+                        }   
+
+                        if($pos!==FALSE) break;
+
+                    }
+
+                    if($auto_reply_private_message==""){
+
+
+                        $auto_reply_private_message = str_replace('#LEAD_USER_NAME#',$commenter_name,$default_reply_no_filter_private);
+                        $auto_reply_private_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_private_message);
+                        $auto_reply_private_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_private_message);
+
+                        // added by mostofa on 26-04-2017
+                        $auto_reply_comment_message = str_replace('#LEAD_USER_NAME#',$commenter_name,$default_reply_no_filter_comment);
+                        $auto_reply_comment_message = str_replace("#LEAD_USER_FIRST_NAME#",$commenter_first_name,$auto_reply_comment_message);
+                        $auto_reply_comment_message = str_replace("#LEAD_USER_LAST_NAME#",$commenter_last_name,$auto_reply_comment_message);
+                    }
+
+
+
+
+                }
+              
+              
+                $comment_result_info=array(
+                    "id" => $comment_id,
+                    "comment_text" =>$comment_text,
+                    "name"      =>$commenter_name,
+                    "commenter_id"      =>$commenter_id,
+                    "comment_time" =>$comment_time,
+                    "reply_time"   =>date("Y-m-d H:i:s")
+                );
+                // added by mostofa on 27-04-2017
+
+                $comment_result_info['comment_reply_text'] = $auto_reply_comment_message;                
+                $comment_result_info['reply_text'] = $auto_reply_private_message;
+
+                if($comment_reply_enabled == 'yes' && $auto_reply_comment_message!='')
+                {
+                    try
+                        {
+                            $reply_info = $this->fb_rx_login->auto_comment($auto_reply_comment_message,$comment_id,$post_access_token);
+                            $comment_result_info['reply_status_comment']= "success";
+                        }
+                    catch(Exception $e){
+                        $comment_result_info['reply_status_comment']= $e->getMessage();
+                    }
+                }
+
+
+                try{
+
+                    if($auto_reply_private_message!=""){
+                        $send_reply_info=$this->fb_rx_login->send_private_reply($auto_reply_private_message,$comment_id,$post_access_token);                        
+
+                        sleep(rand(1,5));
+
+
+                        if(isset($send_reply_info['error'])){
+                            $comment_result_info['reply_status']= $send_reply_info['error']['message'];
+                            $comment_result_info['reply_id']="";
+                        }
+
+                        else{
+
+                            $comment_result_info['reply_status']= "success";
+                            $comment_result_info['reply_id']=isset($send_reply_info['id'])?$send_reply_info['id']:"";
+                        }   
+                    }
+
+
+                    else{
+                        $comment_result_info['reply_status']= "Not Replied ! No match found corresponding filter words";
                         $comment_result_info['reply_id']="";
                     }
-                        
-                    else{
-                    
-                        $comment_result_info['reply_status']= "success";
-                        $comment_result_info['reply_id']=isset($send_reply_info['id'])?$send_reply_info['id']:"";
-                    }   
                 }
-                
-                
-                else{
-                    $comment_result_info['reply_status']= "Not Replied ! No match found corresponding filter words";
-                    $comment_result_info['reply_id']="";
-                }
-            }
-                 
+
                 catch(Exception $e){
-                            
-                    }
+
+                }
+
+            // added by mostofa on 26-04-2017 for comment reply
+            if($auto_like_comment == 'yes')
+            {
+                try
+                {
+                    $this->fb_rx_login->auto_like($comment_id,$post_access_token);
+                }
+                catch(Exception $e){
+
+                }
+
+
+            }
+
                  
              $new_replied_info[]=$comment_result_info;
               
@@ -425,6 +530,7 @@ class native_api extends Home
         }
         
     }
+
 
 
 
@@ -453,8 +559,9 @@ class native_api extends Home
                 $db_client_thread_id  =   $item['thead_id'];
                 $db_client_name  =  $this->db->escape($item['name']);
                 $db_permission  =  '1';
+                $subscribed_at=date("Y-m-d H:i:s");
 
-                $this->basic->execute_complex_query("INSERT IGNORE INTO facebook_rx_conversion_user_list(page_id,user_id,client_thread_id,client_id,client_username,permission) VALUES('$db_page_id',$db_user_id,'$db_client_thread_id','$db_client_id',$db_client_name,'$db_permission');");
+                $this->basic->execute_complex_query("INSERT IGNORE INTO facebook_rx_conversion_user_list(page_id,user_id,client_thread_id,client_id,client_username,permission,subscribed_at) VALUES('$db_page_id',$db_user_id,'$db_client_thread_id','$db_client_id',$db_client_name,'$db_permission','$subscribed_at');");
                 if($this->db->affected_rows() != 0) $success++ ;
 
                 $total++;

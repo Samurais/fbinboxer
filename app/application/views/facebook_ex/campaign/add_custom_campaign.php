@@ -16,7 +16,7 @@
 				rownumbers="true" 
 				toolbar="#tb" 
 				pageSize="50" 
-				pageList="[5,10,15,20,50,100]"  
+				pageList="[5,10,15,20,50,100,200,500,700,1000]"  
 				fit= "true" 
 				fitColumns= "true" 
 				nowrap= "true" 
@@ -39,7 +39,8 @@
 
 				<?php
 			        $search_page_id  = $this->session->userdata('facebook_ex_conversation_custom_page_id');
-			        $search_username  = $this->session->userdata('facebook_ex_conversation_custom_username');
+			        $search_username  = $this->session->userdata('facebook_ex_conversation_custom_username');			        
+			        $search_lead_group  = $this->session->userdata('facebook_ex_conversation_custom_group');
 				?>
 
 				<div class="row">
@@ -73,6 +74,13 @@
 							?>						
 						</select>
 					</div>
+					<div class="form-group">
+                    <?php 
+                        $contact_type_id['']=$this->lang->line('All Groups');
+                        echo form_dropdown('contact_type_id',$contact_type_id,$search_lead_group,'class="form-control" id="contact_type_id"');  
+                        ?>
+                	</div> 
+
 					<button class='btn btn-info'  onclick="doSearch(event)"><?php echo $this->lang->line("search lead");?></button>				
 			
 
@@ -173,10 +181,10 @@
 										<div class="form-group col-xs-12 col-md-6">
 											<label>
 												Delay time (seconds)
-												 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Delay time" data-content="Delay time is the delay between two successive message send. It is very important because without a delay time facebook may treat bulk sending as spam. Put input integer value in seconds upto 15 secs. Keep it '0' to get random delay."><i class='fa fa-info-circle'></i> </a>
+												 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Delay time" data-content="Delay time is the delay between two successive message send. It is very important because without a delay time facebook may treat bulk sending as spam. Keep it '0' to get random delay."><i class='fa fa-info-circle'></i> </a>
 											</label>
 											<br/>
-											<input name="delay_time" value="0" min="0" max="15" id="delay_time" type="number"><br/> 0 means random
+											<input name="delay_time" value="0" min="0" id="delay_time" type="number"><br/> 0 means random
 										</div>
 
 										<div class="form-group col-xs-12 col-md-6">
@@ -717,7 +725,8 @@
 		event.preventDefault(); 
 		$j('#tt').datagrid('load',{
 			search_client_username   :     $j('#search_client_username').val(),             
-			search_page   		:     $j('#search_page').val(),     
+			search_page   		:     $j('#search_page').val(),
+			contact_type_id   		:     $j('#contact_type_id').val(),  
 			is_searched		:     1
 		});
 

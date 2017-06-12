@@ -1,6 +1,6 @@
 <!-- Main content -->
 <section class="content-header">
-	<h1 class = 'text-info'><?php echo $page_name." - auto private reply report";?> </h1>
+	<h1 class = 'text-info'><?php echo $page_name." - auto reply report";?> </h1>
 </section>
 <section class="content">  
 	<div class="row" >
@@ -126,18 +126,44 @@
 		  	$("#edit_auto_reply_page_id").val(response.edit_auto_reply_page_id);
 		  	$("#edit_auto_reply_post_id").val(response.edit_auto_reply_post_id);
 		  	$("#edit_auto_campaign_name").val(response.edit_auto_campaign_name);
-		  	$("#edit_nofilter_word_found_text").val(response.edit_nofilter_word_found_text);
+		  	
+		  	
 		  	$("#edit_"+response.reply_type).prop('checked', true);
+
+		  	// added by mostofa on 27-04-2017
+		  	if(response.comment_reply_enabled == 'no')
+		  		$("#edit_comment_reply_enabled_no").attr('checked','checked');
+		  	else
+		  		$("#edit_comment_reply_enabled_yes").attr('checked','checked');
+
+		  	if(response.multiple_reply == 'no')
+		  		$("#edit_multiple_reply_no").attr('checked','checked');
+		  	else
+		  		$("#edit_multiple_reply_yes").attr('checked','checked');
+
+		  	if(response.auto_like_comment == 'no')
+			  		$("#edit_auto_like_comment_no").attr('checked','checked');
+			  	else
+			  		$("#edit_auto_like_comment_yes").attr('checked','checked');
+
 		  	if(response.reply_type == 'generic')
 		  	{
 		  		$("#edit_generic_message_div").show();
 		  		$("#edit_filter_message_div").hide();
 		  		var i=1;
 		  		edit_content_counter = i;
-		  		$("#edit_generic_message").val(response.auto_reply_text);	  	  	
+		  		var auto_reply_text_array_json = JSON.stringify(response.auto_reply_text);
+		  		auto_reply_text_array = JSON.parse(auto_reply_text_array_json,'true');
+		  		$("#edit_generic_message").html(auto_reply_text_array[0]['comment_reply']);	
+		  		$("#edit_generic_message_private").html(auto_reply_text_array[0]['private_reply']);  	  	
 		  	}
 		  	else
 		  	{
+		  		var edit_nofilter_word_found_text = JSON.stringify(response.edit_nofilter_word_found_text);
+		  			edit_nofilter_word_found_text = JSON.parse(edit_nofilter_word_found_text,'true');
+		  		$("#edit_nofilter_word_found_text").html(edit_nofilter_word_found_text[0]['comment_reply']);
+		  		$("#edit_nofilter_word_found_text_private").html(edit_nofilter_word_found_text[0]['private_reply']);
+		  		
 		  		$("#edit_filter_message_div").show();
 		  		$("#edit_generic_message_div").hide();
 		  		var auto_reply_text_array = JSON.stringify(response.auto_reply_text);
@@ -148,6 +174,9 @@
 		  		    $("#edit_filter_div_"+j).show();
 		  			$("#edit_filter_word_"+j).val(auto_reply_text_array[i]['filter_word']);
 		  			$("#edit_filter_message_"+j).val(auto_reply_text_array[i]['reply_text']);
+		  			// added by mostofa 25-04-2017
+		  			var unscape_comment_reply_text = auto_reply_text_array[i]['comment_reply_text'];
+		  			$("#edit_comment_reply_msg_"+j).html(unscape_comment_reply_text);
 		  		}
 
 
@@ -297,10 +326,40 @@
 	            <input type="hidden" name="edit_auto_reply_page_id" id="edit_auto_reply_page_id" value="">
 	            <input type="hidden" name="edit_auto_reply_post_id" id="edit_auto_reply_post_id" value="">
             <div class="modal-body" id="edit_auto_reply_message_modal_body">                
-				<div class="row" style="padding: 10px 20px 10px 20px;">					
+				<div class="row" style="padding: 10px 20px 10px 20px;">
+					<!-- added by mostofa on 26-04-2017 -->
 					<div class="col-xs-12">
-						<input name="edit_message_type" value="generic" id="edit_generic" class="radio_button" type="radio"> Generic message for all <br/>
-						<input name="edit_message_type" value="filter" id="edit_filter" class="radio_button" type="radio"> Send message by filtering word/sentence 
+						<div class="col-xs-9" style="padding: 0px;"><label>Do you want to send reply message to a user multiple times?</label></div>
+						<div class="col-xs-3">
+							<label class="radio-inline"><input name="edit_multiple_reply" value="no" id="edit_multiple_reply_no" class="radio_button" type="radio">No</label>
+							<label class="radio-inline"><input name="edit_multiple_reply" value="yes" id="edit_multiple_reply_yes" class="radio_button" type="radio">Yes</label>
+						</div>
+					</div>
+					<div class="col-xs-12">
+						<div class="col-xs-6" style="padding: 0px;">
+							<label>Do you want to enable comment reply?</label>
+						</div>
+						<div class="col-xs-6">							
+							<label class="radio-inline"><input name="edit_comment_reply_enabled" value="no" id="edit_comment_reply_enabled_no" class="radio_button" type="radio">No</label>
+							<label class="radio-inline"><input name="edit_comment_reply_enabled" value="yes" id="edit_comment_reply_enabled_yes" class="radio_button" type="radio">Yes</label>
+						</div>
+					</div>
+
+					<div class="col-xs-12">
+						<div class="col-xs-6" style="padding: 0px;">
+							<label>Do you want to like on comment by page?</label>
+						</div>
+						<div class="col-xs-6">							
+							<label class="radio-inline"><input name="edit_auto_like_comment" value="no" id="edit_auto_like_comment_no" class="radio_button" type="radio" checked>No</label>
+							<label class="radio-inline"><input name="edit_auto_like_comment" value="yes" id="edit_auto_like_comment_yes" class="radio_button" type="radio">Yes</label>
+						</div>
+					</div>
+
+					<br/><br/>
+									
+					<div class="col-xs-12">
+						<input name="edit_message_type" value="generic" id="edit_generic" class="radio_button" type="radio"> <label for="edit_generic">Generic message for all</label> <br/>
+						<input name="edit_message_type" value="filter" id="edit_filter" class="radio_button" type="radio"> <label for="edit_filter">Send message by filtering word/sentence</label>
 					</div>
 					<div class="col-xs-12" style="margin-top: 15px;">
 						<div class="form-group">
@@ -314,7 +373,7 @@
 					<div class="col-xs-12" id="edit_generic_message_div" style="display: none;">
 						<div class="form-group">
 							<label>
-								Message <span class="red">*</span>
+								Message for comment reply <span class="red">*</span>
 								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<span class='pull-right'> 
@@ -327,18 +386,35 @@
 							</span>	
 							<textarea class="form-control message" name="edit_generic_message" id="edit_generic_message" placeholder="Type your message here..." style="height:170px;"></textarea>
 							<div class='text-center' id="emotion_container"><?php echo $emotion_list;?></div>
+
+							<br/>
+							<label>
+								Message for private reply <span class="red">*</span>
+								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
+							</label>
+							<span class='pull-right'> 
+								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
+								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
+							</span>
+							<span class='pull-right'> 
+								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
+								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
+							</span>	
+							<textarea class="form-control message" name="edit_generic_message_private" id="edit_generic_message_private" placeholder="Type your message here..." style="height:170px;"></textarea>
+							<div class='text-center' id="emotion_container"><?php echo $emotion_list;?></div>
 						</div>
 					</div>
 					<div class="col-xs-12" id="edit_filter_message_div" style="display: none;">
-						<div class="form-group" id="edit_filter_div_1" style="border: 1px solid #ccc; padding: 10px;">
+					<?php for($i=1;$i<=10;$i++) :?>
+						<div class="form-group" id="edit_filter_div_<?php echo $i; ?>" style="border: 1px solid #ccc; padding: 10px;">
 							<label>
 								Filter Word/Sentence <span class="red">*</span>
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
+								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -  why, want to know, when"><i class='fa fa-info-circle'></i> </a>
 							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_1" id="edit_filter_word_1" placeholder="write your filter word here">
+							<input class="form-control filter_word" type="text" name="edit_filter_word_<?php echo $i; ?>" id="edit_filter_word_<?php echo $i; ?>" placeholder="write your filter word here">
 							<br/>
 							<label>
-								Message <span class="red">*</span>
+								Msg for private reply<span class="red">*</span>
 								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<span class='pull-right'> 
@@ -349,19 +425,12 @@
 								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
 								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
 							</span>	
-							<textarea class="form-control message" name="edit_filter_message_1" id="edit_filter_message_1"  placeholder="Type your message here..." style="height:170px;"></textarea>
+							<textarea class="form-control message" name="edit_filter_message_<?php echo $i; ?>" id="edit_filter_message_<?php echo $i; ?>"  placeholder="Type your message here..." style="height:170px;"></textarea>
 							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
 
-						<div class="form-group" id="edit_filter_div_2" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_2" id="edit_filter_word_2" placeholder="write your filter word here">
 							<br/>
 							<label>
-								Message 
+								Msg for comment reply<span class="red">*</span>
 								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<span class='pull-right'> 
@@ -372,193 +441,12 @@
 								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
 								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
 							</span>	
-							<textarea class="form-control message" name="edit_filter_message_2" id="edit_filter_message_2"  placeholder="Type your message here..." style="height:170px;"></textarea>
+							<textarea class="form-control message" name="edit_comment_reply_msg_<?php echo $i; ?>" id="edit_comment_reply_msg_<?php echo $i; ?>"  placeholder="Type your message here..." style="height:170px;"></textarea>
 							<div class='text-center' id=""><?php echo $emotion_list;?></div>
+							
 						</div>
-
-						<div class="form-group" id="edit_filter_div_3" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_3" id="edit_filter_word_3" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_3" id="edit_filter_message_3"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
-
-						<div class="form-group" id="edit_filter_div_4" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_4" id="edit_filter_word_4" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_4" id="edit_filter_message_4"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
-
-						<div class="form-group" id="edit_filter_div_5" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_5" id="edit_filter_word_5" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_5" id="edit_filter_message_5"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
-
-						<div class="form-group" id="edit_filter_div_6" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_6" id="edit_filter_word_6" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_6" id="edit_filter_message_6"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
-
-						<div class="form-group" id="edit_filter_div_7" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_7" id="edit_filter_word_7" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_7" id="edit_filter_message_7"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
-
-						<div class="form-group" id="edit_filter_div_8" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_8" id="edit_filter_word_8" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_8" id="edit_filter_message_8"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
-
-						<div class="form-group" id="edit_filter_div_9" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_9" id="edit_filter_word_9" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_9" id="edit_filter_message_9"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
-
-						<div class="form-group" id="edit_filter_div_10" style="margin-top : 10px; display : none; border: 1px solid #ccc; padding: 10px;">
-							<label>
-								Filter Word/Sentence 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the word or sentence for which you want to filter comment. For multiple filter keyword write comma separated. Example -   why, wanto to know, when"><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<input class="form-control filter_word" type="text" name="edit_filter_word_10" id="edit_filter_word_10" placeholder="write your filter word here">
-							<br/>
-							<label>
-								Message 
-								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="write your message which you want to send based on filter words. You can customize the message by individual commenter name."><i class='fa fa-info-circle'></i> </a>
-							</label>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> Include "Last Name"</a>
-							</span>
-							<span class='pull-right'> 
-								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
-								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> Include "First Name"</a>
-							</span>	
-							<textarea class="form-control message" name="edit_filter_message_10" id="edit_filter_message_10"  placeholder="Type your message here..." style="height:170px;"></textarea>
-							<div class='text-center' id=""><?php echo $emotion_list;?></div>
-						</div>
+					<?php endfor; ?>
+						
 
 						<br/>
 						<div class="clearfix">
@@ -568,7 +456,7 @@
 
 						<div class="form-group" id="edit_nofilter_word_found_div" style="margin-top: 10px; border: 1px solid #ccc; padding: 10px;">
 							<label>
-								Message if no filter word found
+								Comment reply if no matching found
 								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the message,  if no filter word found. If you don't want to send message them, just keep it blank ."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<span class='pull-right'> 
@@ -580,6 +468,21 @@
 								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> "First Name"</a>
 							</span>	
 							<textarea class="form-control message" name="edit_nofilter_word_found_text" id="edit_nofilter_word_found_text"  placeholder="Type your message here..." style="height:170px;"></textarea>
+							<div class='text-center' id=""><?php echo $emotion_list;?></div>
+							<br/>
+							<label>
+								Private reply if no matching found
+								<a href="#" data-placement="bottom"  data-toggle="popover" data-trigger="focus" title="Message" data-content="Write the message,  if no filter word found. If you don't want to send message them, just keep it blank ."><i class='fa fa-info-circle'></i> </a>
+							</label>
+							<span class='pull-right'> 
+								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user last name"" data-content="You can include #LEAD_USER_LAST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
+								<a title="Include lead user name" class='btn btn-default btn-sm lead_last_name'><i class='fa fa-user'></i> "Last Name"</a>
+							</span>
+							<span class='pull-right'> 
+								<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
+								<a title="Include lead user name" class='btn btn-default btn-sm lead_first_name'><i class='fa fa-user'></i> "First Name"</a>
+							</span>	
+							<textarea class="form-control message" name="edit_nofilter_word_found_text_private" id="edit_nofilter_word_found_text_private"  placeholder="Type your message here..." style="height:170px;"></textarea>
 							<div class='text-center' id=""><?php echo $emotion_list;?></div>
 						</div>
 

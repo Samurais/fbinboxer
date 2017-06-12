@@ -132,7 +132,7 @@ class Fb_chat_plugin_custom extends Home
         $this->db->trans_start(); 
 
         $random_num = $this->_random_number_generator();
-        $js_code = '<div id="loadhere"></div>
+        $js_code = '<div id="mostofa_chat_load"></div>
         <script data-name="'.$random_num.'" id="domain_fb_statnow" type="text/javascript" src="'.site_url().'js/my_chat_custom.js"></script>
         <script>(function(d, s, id) {
             var js, fjs = d.getElementsByTagName(s)[0];
@@ -160,7 +160,7 @@ class Fb_chat_plugin_custom extends Home
 
         $where_update = array('id' => $last_id);
         $update_code = $last_id.$random_num;
-        $js_code = '<div id="loadhere"></div>
+        $js_code = '<div id="mostofa_chat_load"></div>
         <script data-name="'.$update_code.'" id="domain_fb_statnow" type="text/javascript" src="'.site_url().'js/my_chat_custom.js"></script>
         <script>(function(d, s, id) {
             var js, fjs = d.getElementsByTagName(s)[0];

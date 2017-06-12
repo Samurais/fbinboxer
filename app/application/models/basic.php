@@ -221,7 +221,7 @@ class Basic extends CI_Model
 	}
 
 
-	public function get_data($table,$where='',$select='',$join='',$limit='',$start=NULL,$order_by='',$group_by='',$num_rows=0,$csv='',$delete_overwrite=0) //selects data from a table as well as counts number of affected rows
+	public function get_data($table,$where='',$select='',$join='',$limit='',$start=NULL,$order_by='',$group_by='',$num_rows=0,$csv='') //selects data from a table as well as counts number of affected rows
 	{
 				
 		
@@ -237,7 +237,7 @@ class Basic extends CI_Model
 		if($join!='')					$this->generate_joining_clause($join);		
 		if($where!='') 					$this->generate_where_clause($where);
 
-		if($this->db->field_exists('deleted',$table) && $delete_overwrite==0)
+		if($this->db->field_exists('deleted',$table))
 		{
 			$deleted_str=$table.".deleted";
 			$this->db->where($deleted_str,"0");
@@ -306,7 +306,7 @@ class Basic extends CI_Model
 	
 	function update_data($table,$where,$data) //updates data of a table 
 	{
-		$this->db->where($where);
+		if($where!='') $this->db->where($where);
 		$this->db->update($table,$data);
 		return true;
 	}

@@ -42,7 +42,34 @@
 	               			<input name="institute_mobile" value="<?php echo $this->config->item('institute_mobile');?>"  class="form-control" type="text">		          
 	             			<span class="red"><?php echo form_error('institute_mobile'); ?></span>
 	             		</div>
-		           </div> 
+		           </div>
+
+		           <div class="form-group">
+		             	<label class="col-sm-3 control-label" for="">Slogan 
+		             	</label>
+	             		<div class="col-sm-9 col-md-6 col-lg-6">
+	               			<input name="slogan" value="<?php echo $this->config->item('slogan');?>"  class="form-control" type="text">		          
+	             			<span class="red"><?php echo form_error('slogan'); ?></span>
+	             		</div>
+		           </div>
+
+		           <div class="form-group">
+		             	<label class="col-sm-3 control-label" for=""><?php echo $this->lang->line("product name");?> 
+		             	</label>
+	             		<div class="col-sm-9 col-md-6 col-lg-6">
+	               			<input name="product_name" value="<?php echo $this->config->item('product_name');?>"  class="form-control" type="text">		          
+	             			<span class="red"><?php echo form_error('product_name'); ?></span>
+	             		</div>
+		           </div>
+
+		           <div class="form-group">
+		             	<label class="col-sm-3 control-label" for=""><?php echo $this->lang->line("product short name");?> 
+		             	</label>
+	             		<div class="col-sm-9 col-md-6 col-lg-6">
+	               			<input name="product_short_name" value="<?php echo $this->config->item('product_short_name');?>"  class="form-control" type="text">		          
+	             			<span class="red"><?php echo form_error('product_short_name'); ?></span>
+	             		</div>
+		           </div>
 
 		           <div class="form-group">
 		             	<label class="col-sm-3 control-label" for=""><?php echo $this->lang->line("logo");?>
@@ -66,18 +93,6 @@
 	             			<span class="red"><?php echo $this->session->userdata('favicon_error'); $this->session->unset_userdata('favicon_error'); ?></span>
 	             		</div>
 		           </div> 
-
-		           <div class="form-group">
-		             	<label class="col-sm-3 control-label" for=""><?php echo $this->lang->line("language");?>
-		             	</label>
-	             		<div class="col-sm-9 col-md-6 col-lg-6">	             			
-	               			<?php
-							$select_lan="english";
-							if($this->config->item('language')!="") $select_lan=$this->config->item('language');
-							echo form_dropdown('language',$language_info,$select_lan,'class="form-control" id="language"');  ?>		          
-	             			<span class="red"><?php echo form_error('language'); ?></span>
-	             		</div>
-		           </div>
 
 		        
 		           <div class="form-group">

@@ -146,14 +146,15 @@ class facebook_ex_json_messanger extends Home
                     )
                 ) 
             );
-        $response['message'] = json_encode($message);
         //insert data to useges log table
         $this->_insert_usage_log($module_id=81,$request=1);
 
-        echo json_encode($response);
+        //modified code start
+        $message= json_encode($message, JSON_UNESCAPED_UNICODE);
+        $result['message'] = stripslashes($message);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+        //modified code end 
     }
-
-
 
 
 }

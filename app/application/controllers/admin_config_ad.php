@@ -67,7 +67,7 @@ class admin_config_ad extends Home
         if ($_POST) 
         {
             // validation
-            $this->form_validation->set_rules('section1_html',          '<b>Section - 1 (970x90)</b>',   	        'trim');
+            $this->form_validation->set_rules('section1_html',          '<b>Section - 1 (970x90)</b>',              'trim');
             $this->form_validation->set_rules('section1_html_mobile',   '<b>Section - 1 : Mobile  (320x100)</b>',   'trim');
             $this->form_validation->set_rules('section2_html',          '<b>Section: 2 (300x250) </b>',             'trim');
             $this->form_validation->set_rules('section3_html',          '<b>Section: 3 (300x250) </b>',             'trim');

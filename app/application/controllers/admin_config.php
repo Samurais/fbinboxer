@@ -76,7 +76,9 @@ class Admin_config extends Home
             $this->form_validation->set_rules('institute_email',      '<b>'.$this->lang->line("company email").'</b>',            'trim|required|xss_clean');
             $this->form_validation->set_rules('institute_mobile',     '<b>'.$this->lang->line("company phone/ mobile").'</b>',    'trim|xss_clean');
             $this->form_validation->set_rules('time_zone',            '<b>'.$this->lang->line("time zone").'</b>',                'trim|xss_clean');
-            $this->form_validation->set_rules('language',             '<b>'.$this->lang->line("language").'</b>',                 'trim|xss_clean');
+            $this->form_validation->set_rules('slogan',               '<b>'.$this->lang->line("slogan").'</b>',                 'trim|xss_clean');
+            $this->form_validation->set_rules('product_name',         '<b>'.$this->lang->line("product name").'</b>',                 'trim|xss_clean');
+            $this->form_validation->set_rules('product_short_name',   '<b>'.$this->lang->line("product short name").'</b>',                 'trim|xss_clean');
             // go to config form page if validation wrong
             if ($this->form_validation->run() == false) {
                 return $this->configuration();
@@ -86,8 +88,10 @@ class Admin_config extends Home
                 $institute_address=addslashes(strip_tags($this->input->post('institute_address', true)));
                 $institute_email=addslashes(strip_tags($this->input->post('institute_email', true)));
                 $institute_mobile=addslashes(strip_tags($this->input->post('institute_mobile', true)));
-                $time_zone=addslashes(strip_tags($this->input->post('time_zone', true)));                
-                $language=addslashes(strip_tags($this->input->post('language', true)));
+                $time_zone=addslashes(strip_tags($this->input->post('time_zone', true)));
+                $slogan=addslashes(strip_tags($this->input->post('slogan', true)));
+                $product_name=addslashes(strip_tags($this->input->post('product_name', true)));
+                $product_short_name=addslashes(strip_tags($this->input->post('product_short_name', true)));
 
                 $base_path=realpath(APPPATH . '../assets/images');
 
@@ -97,7 +101,7 @@ class Admin_config extends Home
                     $photo = "logo.png";
                     $config = array(
                         "allowed_types" => "png",
-                        "upload_path" => $base_path,                        
+                        "upload_path" => $base_path,
                         "overwrite" => true,
                         "file_name" => $photo,
                         'max_size' => '200',
@@ -136,13 +140,14 @@ class Admin_config extends Home
                 // writing application/config/my_config
                   $app_my_config_data = "<?php ";
                 $app_my_config_data.= "\n\$config['default_page_url'] = '".$this->config->item('default_page_url')."';\n";
-                $app_my_config_data.= "\$config['product_name'] = '".$this->config->item('product_name')."';\n";
-                $app_my_config_data.= "\$config['product_short_name'] = '".$this->config->item('product_short_name')."' ;\n";
                 $app_my_config_data.= "\$config['product_version'] = '".$this->config->item('product_version')." ';\n\n";
                 $app_my_config_data.= "\$config['institute_address1'] = '$institute_name';\n";
                 $app_my_config_data.= "\$config['institute_address2'] = '$institute_address';\n";
                 $app_my_config_data.= "\$config['institute_email'] = '$institute_email';\n";
                 $app_my_config_data.= "\$config['institute_mobile'] = '$institute_mobile';\n\n";
+                $app_my_config_data.= "\$config['slogan'] = '$slogan';\n";
+                $app_my_config_data.= "\$config['product_name'] = '$product_name';\n";
+                $app_my_config_data.= "\$config['product_short_name'] = '$product_short_name';\n\n";
                 $app_my_config_data.= "\$config['developed_by'] = '".$this->config->item('developed_by')."';\n";
                 $app_my_config_data.= "\$config['developed_by_href'] = '".$this->config->item('developed_by_href')."';\n";
                 $app_my_config_data.= "\$config['developed_by_title'] = '".$this->config->item('developed_by_title')."';\n";
@@ -150,7 +155,7 @@ class Admin_config extends Home
                 $app_my_config_data.= "\$config['support_email'] = '".$this->config->item('support_email')."' ;\n";
                 $app_my_config_data.= "\$config['support_mobile'] = '".$this->config->item('support_mobile')."' ;\n";                
                 $app_my_config_data.= "\$config['time_zone'] = '$time_zone';\n";                
-                $app_my_config_data.= "\$config['language'] = '$language';\n";
+                $app_my_config_data.= "\$config['language'] = '".$this->config->item('language')."';\n";
                 $app_my_config_data.= "\$config['sess_use_database'] = true;\n";
                 $app_my_config_data.= "\$config['sess_table_name'] = 'ci_sessions';\n";
 
@@ -190,7 +195,7 @@ class Admin_config extends Home
         $only_domain = $file_data_array['domain'];
 
         // $url = "http://konok-pc/xeroneit/envato_license_activation/delete_purchase_code.php?purchase_code={$purchase_code}&domain={$domain}";
-         $url = "http://xeroneit.net/development/envato_license_activation/delete_purchase_code.php?purchase_code={$purchase_code}&domain={$only_domain}&item_name=FB Inboxer";
+         $url = "http://xeroneit.net/development/envato_license_activation/delete_purchase_code.php?purchase_code={$purchase_code}&domain={$only_domain}&item_name=FBInboxer";
         $credentials = $this->get_general_content($url);
         $delete_option = json_decode($credentials,true);
 

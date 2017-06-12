@@ -6,7 +6,7 @@
 <head>
 	<meta charset="utf-8">
 	<title><?php echo $this->config->item('product_name')." | ".$this->config->item('slogan');?></title>
-	<meta name="description" content="complete visitor and seo analytics">
+	<meta name="description" content="Master Facebook Messenger Marketing Software">
 	<meta name="author" content="<?php echo $this->config->item('institute_address1');?>">
 
 	<!-- Mobile Meta -->

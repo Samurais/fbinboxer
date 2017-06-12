@@ -23,6 +23,10 @@
 							foreach($page_info as $key=>$val)
 							{	
 								$username=$val['username'];
+								if($username=="")
+								{
+									$username=$val["page_id"];
+								}
 								if($i==0) $first_username = $username;
 								$page_name=$val['page_name'];
 								echo "<option value='{$username}'>{$page_name}</option>";								

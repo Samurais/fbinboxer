@@ -425,7 +425,7 @@ class facebook_rx_insight extends Home
 
 
 
-    public function page_insight($table_name='',$table_id=0)
+     public function page_insight($table_name='',$table_id=0)
     {
         if($table_id==0) exit();
         $where['where'] = array('id'=>$table_id,'user_id'=>$this->user_id);
@@ -442,6 +442,8 @@ class facebook_rx_insight extends Home
         $page_storytellers_by_story_type_description = isset($page_storytellers_by_story_type[0]['description']) ? $page_storytellers_by_story_type[0]['description'] : "";
 
         $temp= isset($page_storytellers_by_story_type[0]['values']) ? $page_storytellers_by_story_type[0]['values'] : array();
+        $page_storytellers_by_story_type_data=array();
+        $page_storytellers_by_story_type_data=array();
         foreach($temp as $value)
         {
             $date = (array)$value['end_time'];
@@ -465,9 +467,10 @@ class facebook_rx_insight extends Home
         $metrics = "insights/page_impressions_by_paid_non_paid/day";
         $page_impression_paid_vs_organic = $this->fb_rx_login->get_page_insight_info($access_token,$metrics,$page_id);
         $i = 0;
-        $page_impression_paid_vs_organic_description = $page_impression_paid_vs_organic[0]['description'];
+        $page_impression_paid_vs_organic_description = isset($page_impression_paid_vs_organic[0]['description']) ? $page_impression_paid_vs_organic[0]['description'] : "";
 
         $temp2 = isset($page_impression_paid_vs_organic[0]['values']) ? $page_impression_paid_vs_organic[0]['values'] : array();
+        $page_impression_paid_vs_organic_data=array();
         foreach($temp2 as $value)
         {
             $date = (array)$value['end_time'];
@@ -490,6 +493,7 @@ class facebook_rx_insight extends Home
             $page_impression_paid_vs_organic_description = $page_impressions_organic[0]['description'];
         
         $temp3 = isset($page_impressions_organic[0]['values']) ? $page_impressions_organic[0]['values'] : array();
+        $page_impressions_organic_data=array();
         foreach($temp3 as $value)
         {
             $date = (array)$value['end_time'];
@@ -726,7 +730,7 @@ class facebook_rx_insight extends Home
                 $page_positive_feedback_by_type_data[$i]['comment'] = $value['value']['comment'];
                 $page_positive_feedback_by_type_data[$i]['like'] = $value['value']['like'];
                 $page_positive_feedback_by_type_data[$i]['link'] = $value['value']['link'];
-                $page_positive_feedback_by_type_data[$i]['rsvp'] = $value['value']['rsvp'];
+                $page_positive_feedback_by_type_data[$i]['rsvp'] = isset($value['value']['rsvp']) ? $value['value']['rsvp'] : 0;
                 $i++;
             }
         }
@@ -980,6 +984,7 @@ class facebook_rx_insight extends Home
         $data['page_title'] = $this->lang->line('page statistics');
         $this->_viewcontroller($data);
     }
+
 
 
 

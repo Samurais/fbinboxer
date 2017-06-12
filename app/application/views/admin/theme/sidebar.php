@@ -64,16 +64,22 @@
 
       <!-- FB Exciter used same account import as Soci Marketer -->
       <?php if($this->session->userdata("user_type")=="Admin" || in_array(65,$this->module_access)) : ?> 
-        <li> <a href="<?php echo site_url()."facebook_rx_account_import/index"; ?>"> <i class="fa fa-download"></i> <span><?php echo $this->lang->line("Import Account"); ?></span></a></li>     
+        <li> <a href="<?php echo site_url()."facebook_rx_account_import/index"; ?>"> <i class="fa fa-cloud-download"></i> <span><?php echo $this->lang->line("Import Account"); ?></span></a></li>     
       <?php endif; ?>  
 
       <?php if($this->session->userdata("user_type")=="Admin" || in_array(76,$this->module_access)) : ?> 
-        <li> <a href="<?php echo site_url()."facebook_ex_import_lead/index"; ?>"> <i class="fa fa-group"></i> <span><?php echo $this->lang->line("Import Lead"); ?></span></a></li>    
+        <li> <a href="<?php echo site_url()."facebook_ex_import_lead/index"; ?>"> <i class="fa fa-download"></i> <span><?php echo $this->lang->line("Import Lead"); ?></span></a></li>   
+        <li> <a href="<?php echo site_url()."facebook_ex_import_lead/contact_group"; ?>"> <i class="fa fa-group"></i> <span><?php echo $this->lang->line("Lead Group"); ?></span></a></li>    
+        <li> <a href="<?php echo site_url()."facebook_ex_import_lead/contact_list"; ?>"> <i class="fa fa-user"></i> <span><?php echo $this->lang->line("Lead List"); ?></span></a></li>  
       <?php endif; ?>
 
 
       <?php if($this->session->userdata("user_type")=="Admin" || in_array(76,$this->module_access)) : ?> 
         <li> <a href="<?php echo site_url()."facebook_ex_campaign/create_multipage_campaign"; ?>"> <i class="fa fa-clone"></i> <span> <?php echo $this->lang->line("Multi-page Campaign"); ?></span></a></li>    
+      <?php endif; ?> 
+
+      <?php if($this->session->userdata("user_type")=="Admin" || in_array(76,$this->module_access)) : ?> 
+        <li> <a href="<?php echo site_url()."facebook_ex_campaign/create_multigroup_campaign"; ?>"> <i class="fa fa-object-ungroup"></i> <span><?php echo $this->lang->line("Multi-group Campaign"); ?></span></a></li>    
       <?php endif; ?> 
 
       <?php if($this->session->userdata("user_type")=="Admin" || in_array(76,$this->module_access)) : ?> 

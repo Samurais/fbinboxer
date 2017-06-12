@@ -63,6 +63,12 @@ class Facebook_rx_config extends Home
         $crud->display_as('api_secret', $this->lang->line('facebook App secret'));
         $crud->display_as('status', $this->lang->line('status'));
 
+        $fb_rx_login_database_id = $this->session->userdata("fb_rx_login_database_id");
+        if($fb_rx_login_database_id != ''){
+            $this->load->library('fb_rx_login');
+            $this->fb_rx_login->view_loader();
+        }
+
         $images_url = base_url("plugins/grocery_crud/themes/flexigrid/css/images/login.png");
         $crud->add_action('Login', $images_url, 'facebook_rx_config/fb_login');
 
@@ -144,6 +150,7 @@ class Facebook_rx_config extends Home
         $this->load->library("fb_rx_login"); 
         $url="https://graph.facebook.com/debug_token?input_token={$input_token}&access_token={$input_token}";
         $result= $this->fb_rx_login->run_curl_for_fb($url);
+
         $result = json_decode($result,true);
 
         if(isset($result["data"]["is_valid"]) && $result["data"]["is_valid"]) 

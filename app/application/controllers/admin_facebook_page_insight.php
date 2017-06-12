@@ -464,7 +464,7 @@ class Admin_facebook_page_insight extends Home
                 $page_positive_feedback_by_type_data[$i]['comment'] = $value['value']['comment'];
                 $page_positive_feedback_by_type_data[$i]['like'] = $value['value']['like'];
                 $page_positive_feedback_by_type_data[$i]['link'] = $value['value']['link'];
-                $page_positive_feedback_by_type_data[$i]['rsvp'] = $value['value']['rsvp'];
+                $page_positive_feedback_by_type_data[$i]['rsvp'] = isset($value['value']['rsvp']) ? $value['value']['rsvp'] : 0;
                 $i++;
             }
         }
@@ -711,20 +711,14 @@ class Admin_facebook_page_insight extends Home
         $data['page_views_external_referrals_description'] = "Top referring external domains sending traffic to your Page (Total Count) [Last 28 Days]";
         $data['page_views_external_referrals_data'] = $page_views_external_referrals_data;
 
-
-
-
-
-
-
-
-        
+  
 
         $data['body'] = "facebook_page_insight/page_statistics";
         $data['page_title'] = $this->lang->line('page statistics');
         $this->_viewcontroller($data);
 
     }
+
 
 
 

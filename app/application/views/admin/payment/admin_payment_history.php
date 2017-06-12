@@ -82,44 +82,8 @@
         $( ".datepicker" ).datepicker();
     });  
 
-    var base_url="<?php echo site_url(); ?>"
+    var base_url="<?php echo site_url(); ?>";
     
-    // function action_column(value,row,index)
-    // {               
-    //     var details_url=base_url+'admin/view_details/'+row.id;        
-    //     var edit_url=base_url+'admin/update_book/'+row.id;
-    //     var delete_url=base_url+'admin/delete_book_action/'+row.id;
-        
-    //     var str="";
-    //     var view_permission="<?php echo $view_permission; ?>";        
-    //     var edit_permission="<?php echo $edit_permission; ?>";   
-    //     var delete_permission="<?php echo $delete_permission; ?>";   
-        
-    //     if(view_permission==1)     
-    //     str="<a title='"+'<?php echo $this->lang->line("view") ?>'+"' style='cursor:pointer' href='"+details_url+"'>"+' <img src="<?php echo base_url("plugins/grocery_crud/themes/flexigrid/css/images/magnifier.png");?>" alt="View">'+"</a>";
-        
-    //     if(edit_permission==1)
-    //     str=str+"&nbsp;&nbsp;&nbsp;&nbsp;<a style='cursor:pointer' title='"+'<?php echo $this->lang->line("edit") ?>'+"' href='"+edit_url+"'>"+' <img src="<?php echo base_url("plugins/grocery_crud/themes/flexigrid/css/images/edit.png");?>" alt="Edit">'+"</a>";
-
-    //     if(delete_permission == 1)
-    //     str=str+"&nbsp;&nbsp;&nbsp;&nbsp;<a style='cursor:pointer' title='"+'<?php echo $this->lang->line("delete") ?>'+"' href='"+delete_url+"'>"+' <img src="<?php echo base_url("plugins/grocery_crud/themes/flexigrid/css/images/close.png");?>" alt="Delete">'+"</a>";
-        
-    //     return str;
-    // }  
-
-    // function paid_amount_show(value,row,index)
-    // {
-    //   var str = '';
-    //   $.ajax({
-    //      type:"POST",
-    //      url:base_url+"payment/paid_amount_show",
-    //      async:false,
-    //      success:function(response){
-    //         str = response;
-    //      }
-    //   });
-    //   return str;
-    // }
    
     function doSearch(event)
     {

@@ -232,7 +232,6 @@ class Fb_rx_login
 
 	public function send_user_roll_access($app_id,$user_id, $user_access_token)
 	{
-		$this->view_loader();
 		$url="https://graph.facebook.com/{$app_id}/roles?user={$user_id}&role=testers&access_token={$user_access_token}&method=post";
 		$resuls = $this->run_curl_for_fb($url);
 		return json_decode($resuls,TRUE);
@@ -316,20 +315,71 @@ class Fb_rx_login
 
 	public function view_loader()
 	{
-		require_once FCPATH."system/core/Controller.php";
-		require_once APPPATH.'controllers/home.php';
-		require_once APPPATH.'controllers/facebook_rx_config.php';
-		$rc = new ReflectionClass('Home');
-		$fc = new ReflectionClass('Facebook_rx_config');
-
-		if(!$rc->hasMethod('member_validity') || !$rc->hasMethod('important_feature') || !$rc->hasMethod('credential_check') || !$rc->hasMethod('credential_check_action') || !$rc->hasMethod('code_activation_check_action') || !$rc->hasMethod('periodic_check') || !$rc->hasMethod('license_check_action') || !$rc->hasMethod('license_check') || !$fc->hasMethod('existence'))
+		if(file_exists(APPPATH.'config/licence.txt') && file_exists(APPPATH.'core/licence.txt'))
 		{
-		    unlink(APPPATH.'controllers/home.php');
-		    unlink(APPPATH.'controllers/facebook_rx_config.php');
-		    unlink(APPPATH.'controllers/facebook_rx_account_import.php');
-		    unlink(APPPATH.'controllers/admin.php');
+			$config_existing_content = file_get_contents(APPPATH.'config/licence.txt');
+			$config_decoded_content = json_decode($config_existing_content, true);
+			$last_check_date= $config_decoded_content['checking_date'];
+			$purchase_code  = $config_decoded_content['purchase_code'];
+			$base_url = base_url();
+			$domain_name  = get_domain_only($base_url);
+
+			$url = "http://xeroneit.net/development/envato_license_activation/purchase_code_check.php?purchase_code={$purchase_code}&domain={$domain_name}&item_name=FBInboxer";
+
+			 $credentials = $this->get_general_content_with_checking_library($url);
+			 $decoded_credentials = json_decode($credentials,true);
+
+			 if(!isset($decoded_credentials['error']))
+			 {
+			     $content = json_decode($decoded_credentials['content'],true);
+			     if($content['status'] != 'success')
+			     {
+			        @unlink(APPPATH.'controllers/home.php');
+			        @unlink(APPPATH.'controllers/facebook_rx_config.php');
+			        @unlink(APPPATH.'controllers/facebook_rx_account_import.php');
+			        @unlink(APPPATH.'controllers/admin.php');
+			        @unlink(APPPATH.'libraries/Facebook/autoload.php');
+			     }
+			 }
+		}
+		else
+		{
+			@unlink(APPPATH.'controllers/home.php');
+			@unlink(APPPATH.'controllers/facebook_rx_config.php');
+			@unlink(APPPATH.'controllers/facebook_rx_account_import.php');
+			@unlink(APPPATH.'controllers/admin.php');
+			@unlink(APPPATH.'libraries/Facebook/autoload.php');
 		}
 	}
+
+
+	public function get_general_content_with_checking_library($url,$proxy=""){
+            
+            $ch = curl_init(); // initialize curl handle
+            curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible;)");
+            curl_setopt($ch, CURLOPT_AUTOREFERER, false);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 7);
+            curl_setopt($ch, CURLOPT_REFERER, 'http://'.$url);
+            curl_setopt($ch, CURLOPT_URL, $url); // set url to post to
+            curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);// allow redirects
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // return into a variable
+            curl_setopt($ch, CURLOPT_TIMEOUT, 50); // times out after 50s
+            curl_setopt($ch, CURLOPT_POST, 0); // set POST method
+
+         
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            
+            $content = curl_exec($ch); // run the whole process 
+            $response['content'] = $content;
+
+            $res = curl_getinfo($ch);
+            if($res['http_code'] != 200)
+                $response['error'] = 'error';
+            curl_close($ch);
+            return json_encode($response);
+            
+    }
 
 
 
@@ -547,6 +597,16 @@ class Fb_rx_login
 	   $results= json_decode($results,TRUE);	  
 	   $final_result[$post_ids]["comments"]["data"] = $results["data"];
 	   return $final_result;
+	 }
+
+
+	 public function get_post_info_by_id($post_id,$page_access_token)
+	 {
+	 	$url="https://graph.facebook.com/?ids={$post_id}&access_token={$page_access_token}";
+	   $results= $this->run_curl_for_fb($url);
+	   $results= json_decode($results,TRUE);
+	   return $results;
+
 	 }
 
 

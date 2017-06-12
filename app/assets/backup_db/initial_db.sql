@@ -582,3 +582,22 @@ ALTER TABLE `fb_msg_manager` ADD `page_table_id` INT(12) NOT NULL AFTER `faceboo
 ALTER TABLE `fb_msg_manager` CHANGE `last_update_time` `last_update_time` DATETIME NOT NULL COMMENT 'this time in +00 UTC format, We need to convert it to the user time zone';
 
 
+ALTER TABLE `facebook_ex_autoreply` ADD `comment_reply_enabled` ENUM('no','yes') NOT NULL AFTER `reply_type`;
+ALTER TABLE `facebook_ex_autoreply` ADD `multiple_reply` ENUM('no','yes') NOT NULL AFTER `reply_type`;
+ALTER TABLE `facebook_ex_autoreply` ADD `auto_like_comment` ENUM('no','yes') NOT NULL AFTER `reply_type`;
+
+ALTER TABLE `facebook_rx_conversion_user_list` ADD `contact_group_id` VARCHAR(255) NOT NULL AFTER `page_id`;
+ALTER TABLE `facebook_rx_conversion_user_list` DROP INDEX `user_id`, ADD INDEX `user_id` (`contact_group_id`) USING BTREE;
+
+ALTER TABLE `facebook_ex_conversation_campaign` CHANGE `campaign_type` `campaign_type` ENUM('page-wise','lead-wise','group-wise') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'page-wise';
+ALTER TABLE `facebook_ex_conversation_campaign` ADD `group_ids` TEXT NOT NULL COMMENT 'comma seperated group ids if group wise' AFTER `user_id`;
+
+CREATE TABLE IF NOT EXISTS `facebook_rx_conversion_contact_group` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `group_name` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `deleted` enum('0','1') DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+

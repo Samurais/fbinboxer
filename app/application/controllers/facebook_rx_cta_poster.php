@@ -117,20 +117,6 @@ class facebook_rx_cta_poster extends Home
             else $scheduled_at = '<i class="fa fa-remove red" title="Instantly posted"></i>';
             $info[$i]['scheduled_at'] =  $scheduled_at;
 
-            $insight="";
-            if($this->session->userdata('user_type') == 'Admin'|| in_array(72,$this->module_access))
-            {
-                $post_id = $info[$i]['post_id'];
-                $page_id = $info[$i]['page_group_user_id'];
-                
-                if($posting_status=='2')
-                $insight = "<a class='btn btn-sm btn-primary' target='_BLANK' href='".base_url("facebook_rx_insight/post_analytics_display/{$post_id}/{$page_id}")."'><i class='fa fa-line-chart'></i> Post Insight</a>";
-                else $insight = '<i class="fa fa-remove red" title="This post is not published yet."></i>';
-                
-            }
-
-            $info[$i]['insight'] =  $insight;
-
             $cta_type= $info[$i]['cta_type'];
             $cta_type = str_replace('_', " ", $cta_type);
             $cta_type = ucwords(strtolower($cta_type));

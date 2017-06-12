@@ -166,8 +166,9 @@
           <ul>
             <li>Folder : application/config (777)</li>
             <li>Folder : application/core (777)</li>
-            <li>Folder : application/upload (777)</li>
-            <li>Folder : application/download (777)</li>
+            <li>Folder : upload (777)</li>
+            <li>Folder : upload_caster (777)</li>
+            <li>Folder : download (777)</li>
             <li>Folder : js (777)</li>
             <li>File : application/install.txt (777)</li>
           </ul>

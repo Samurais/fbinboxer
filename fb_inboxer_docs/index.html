@@ -82,7 +82,10 @@
 
 			<li><a href="#fbexciter_import_account" title="Account Import">Account Import</a></li>	
 			<li><a href="#fbexciter_import_lead" title="Import Lead">Import Lead</a></li>	
+			<li><a href="#fbexciter_lead_group" title="Lead Group">Lead Group</a></li>	
+			<li><a href="#fbexciter_lead_list" title="Lead List">Lead List</a></li>	
 			<li><a href="#fbexciter_multipage_campaign" title="Multipage Campaign">Multipage Campaign</a></li>	
+			<li><a href="#fbexciter_multigroup_campaign" title="Multigroup Campaign">Multigroup Campaign</a></li>	
 			<li><a href="#fbexciter_custom_campaign" title="Custom Campaign">Custom Campaign</a></li>	
 			<li><a href="#fbexciter_campaign_report" title="Campaign Report">Campaign Report</a></li>	
 			<li><a href="#fbexciter_lead_generator" title="Lead Generation">Lead Generation</a></li>	
@@ -108,7 +111,7 @@
 		<hr>
 		<ul>
 		<li>created: 10th January 2017</li>
-		<li>latest update: 16th January 2017</li>
+		<li>latest update: 4th June 2017</li>
 		<li>by: FB Inboxer </li>
 		<li><a href="http://xeroneit.net/">http://xeroneit.net</a></li>
 		<li>email: <a href="info@xeroneit.net/">info@xeroneit.net</a></li>
@@ -483,6 +486,34 @@
 	</ul>
 </section>
 
+
+
+<section id="fbexciter_lead_group">
+	<div class="page-header"><h3>Lead Group</h3><hr class="notop"></div>
+
+	
+			Create lead groups here. Later you can assign leads to these groups.
+			<p><img src="assets/images/fbexciter/31.png"></p>
+		
+</section>
+
+
+
+
+<section id="fbexciter_lead_list">
+	<div class="page-header"><h3>Lead List</h3><hr class="notop"></div>
+
+	
+			You can now assign leads to one/more groups, so that you can send message targeting one/more groups.
+			<p><img src="assets/images/fbexciter/32.png"></p>
+			<p><img src="assets/images/fbexciter/33.png"></p>
+		
+</section>
+
+
+
+
+
 <section id="fbexciter_multipage_campaign">
 	<div class="page-header"><h3>Multi-page Campaign</h3><hr class="notop"></div>
 	<ul>
@@ -493,6 +524,12 @@
 		<li>You can choose one or more you do not want to include the campaign. The leads you choose here will be unlisted form this campaign and will not recieve this message. Start typing a lead name, it's auto-complete.</li>
 	</ul>
 	<p><img src="assets/images/fbexciter/14.png"></p>
+</section>
+
+<section id="fbexciter_multigroup_campaign">
+	<div class="page-header"><h3>Multi-group Campaign</h3><hr class="notop"></div>
+	Same as multipage campaign except you can send messge targeting lead group not pages.
+	<p><img src="assets/images/fbexciter/34.png"></p>
 </section>
 
 <section id="fbexciter_custom_campaign">
@@ -533,9 +570,9 @@
 <section id="fbexciter_lead_generator">
 	<div class="page-header"><h3>Lead Generator Tools</h3><hr class="notop"></div>
 	<p>We have been discussing about account import, lead import and creating campaign. FB Inboxer has something more powerful. It's the lead generator. Yes, you get it right. This tool will build huge lead list for your pages</p>
-	<p><h5><u>Auto Private Reply</u></h5></p>
+	<p><h5><u>Auto Private Reply & Auto Comment Reply</u></h5></p>
 	<ul>
-		<li>The first job is to enable auto private reply for your posts. To do so, click "Get Latest Post & Enable Auto Reply" button aginst a perticular page. It will show you latest post of that page and you can enable auto reply then.
+		<li>The first job is to enable auto private reply/comment reply for your posts. To do so, click "Get Latest Post & Enable Auto Reply" button aginst a perticular page. It will show you latest post of that page and you can enable auto reply then. You can also enable private reply/comment reply by clicking "Enable reply by post id" button.
 		<p><img class="thumb" src="assets/images/fbexciter/19.png"></p>	
 		<p><img class="thumb" src="assets/images/fbexciter/20.png"></p>	
 		</li>
@@ -545,7 +582,7 @@
 		</li>
 		<li>
 		Now click "Enable Auto Reply" for enabling any particular post. You can send generic message or can send filtering based  message. You can add upto 10 filering options. 
-		Each filtering option contains a comma seperated word/sentence field and message field. Anyone who will comment on this post will get this message in his inbox and the use will be in your lead list. 
+		Each filtering option contains a comma seperated word/sentence field and message field. Anyone who will comment on this post will get the message in his inbox (for private reply) and get the comment (for comment reply). You can choose whether you want private reply/comment reply or both.
 		<p><img class="thumb" src="assets/images/fbexciter/21.png" style="width:600px"></p>	
 		<p><img class="thumb" src="assets/images/fbexciter/22.png" style="width:600px"></p>
 		</li>
@@ -653,6 +690,44 @@
 
 	<section id="update">
 		<div class="page-header"><h3>How to Update</h3><hr class="notop"></div>
+
+		<div class="alert alert-info">
+		Update - v2.0 to v2.1</div>
+		<p>1. Download v2.0</p>
+		<p>2. Copy/Replace your following files and folders taking from v2.1  
+			<ul>
+				<li>documentation/*</li>
+				<li>application/controllers/*</li>
+				<li>application/views/facebook_ex/*</li>
+			</ul>			
+		</p>
+		<p>3. Open application/config/my_config.php and update 'product_version' to v2.1</p>
+		<p>4. You are done.</p>
+
+		<div class="alert alert-info">
+		Update - v1.1 to v2.0</div>
+		<p>1. Download v2.0</p>
+		<p>2. Copy/Replace your following files and folders taking from v2.0  
+			<ul>
+				<li>documentation/*</li>
+				<li>js/*</li>
+				<li>application/controllers/*</li>
+				<li>application/models/*</li>
+				<li>application/libraries/*</li>
+				<li>application/views/admin/theme/sidebar.php</li>
+				<li>application/views/admin/config/edit_config.php</li>
+				<li>application/views/admin/payment/*</li>
+				<li>application/views/facebook_chat_custom/fb_chat.php</li>
+				<li>application/views/facebook_ex/*</li>
+				<li>application/views/facebook_rx/cta_post/cta_post_list.php</li>
+				<li>application/views/include/*</li>
+				<li>application/views/page/*</li>
+				<li>application/views/site/site_theme.php</li>
+			</ul>			
+		</p>
+		<p>3. Open application/config/my_config.php and update 'product_version' to v2.0</p>
+		<p>4. Run the migration file via browser. Example link <b>http://yourdomain.com/sub1/.../fbinboxer/update</b></p>
+		<p>5. You are done.</p>
 
 		
 		<div class="alert alert-info">

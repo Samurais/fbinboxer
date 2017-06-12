@@ -3,7 +3,7 @@
 		<div class="box box-primary">
 			<div class="box-header ui-sortable-handle  text-center" style="cursor: move;margin-bottom: 0px;">
 				<i class="fa fa-pencil"></i>
-				<h3 class="box-title">Edit Multi-page Campaign</h3>
+				<h3 class="box-title">Edit Multi-group Campaign</h3>
 				<!-- tools box -->
 				<div class="pull-right box-tools"></div><!-- /. tools -->
 			</div>
@@ -67,31 +67,14 @@
 					
 					<div class="form-group">
 						<label style="width:100%">
-							Choose pages *
-							 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Choose Pages" data-content="Choose one or more pages to create campaign. This message will send to all your active leads of pages you choose now. You can use 'Do not send message to these leads' field below to unlist any list only from this campaign. To unlist any specific lead permanently, please go to 'Import Lead > Lead List' and unsubscribe the lead, he/she will not recieve any other message until he/she is subscribed again. The value of 'Total Lead Selected' label may different than the original create form, because lead counts are dynamic and change over time."><i class='fa fa-info-circle'></i> </a>
-							 <span class='label label-info pull-right' style="padding:3px 8px;font-size:13px;-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px;">Total Lead Selected : <span id="thread_count"><?php echo $xdata[0]["total_thread"];?></span></span>
+							Choose Groups *
+							 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Choose Pages" data-content="Choose one or more groups to create campaign. This message will send to all your active leads of groups you choose now. You can use 'Do not send message to these leads' field below to unlist any list only from this campaign. To unlist any specific lead permanently, please go to 'Import Lead > Lead List' and unsubscribe the lead, he/she will not recieve any other message until he/she is subscribed again. System will filter multiple instances of same lead for same campaign, means one user will not recieve same campaign message multiple times."><i class='fa fa-info-circle'></i> </a>
+							 <span class='label label-info pull-right' style="padding:3px 8px;font-size:13px;-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px;">Total Lead Selected : <span id="thread_count"><?php echo $xthread_count ?></span></span>
 						</label>
-						<?php
-							$xdata_page_ids = isset($xdata[0]["page_ids"]) ? $xdata[0]["page_ids"] : "";
-							$xdata_fb_page_ids = isset($xdata[0]["fb_page_ids"]) ? $xdata[0]["fb_page_ids"] : "";
-							$page_ids_explode = explode(',', $xdata_page_ids);
-							$fb_page_ids_explode = explode(',', $xdata_fb_page_ids);
-						?>
-						<select multiple="multiple"  class="form-control" id="inbox_to_pages" name="inbox_to_pages[]">	
-						<?php							
-							foreach($page_info as $key=>$val)
-							{	
-								$id=$val['id'];
-								$page_name=$val['page_name'];
-								$page_id=$val['page_id'];
-								if(in_array($id, $page_ids_explode) && in_array($page_id, $fb_page_ids_explode))
-								echo "<option selected value='{$id}-{$page_id}' page_id='{$page_id}'>{$page_name}</option>";								
-								else echo "<option value='{$id}-{$page_id}' page_id='{$page_id}'>{$page_name}</option>";								
-							}
-						 ?>						
-						</select>
+						<?php echo $group_dropdown; ?>
 						
 					</div>
+
 
 					<div class="form-group">
                         <label>
@@ -115,7 +98,7 @@
 								 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Delay time" data-content="Delay time is the delay between two successive message send. It is very important because without a delay time facebook may treat bulk sending as spam.   Keep it '0' to get random delay."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<br/>
-							<input name="delay_time" value="<?php echo $xdata[0]["delay_time"];?>" min="0"  id="delay_time" type="number"><br/> 0 means random
+							<input name="delay_time" value="<?php echo $xdata[0]["delay_time"];?>" min="0" id="delay_time" type="number"><br/> 0 means random
 						</div>
 
 						<div class="form-group col-xs-12 col-md-6">
@@ -268,8 +251,7 @@
 		setTimeout(function() {
 			$(".loading").hide();
 			$(".wait_few_seconds").hide();
-			$("#message,#link,#video_url").blur();
-			count_lead_and_limit();			
+			$("#message,#link,#video_url").blur();		
 		}, 5000);
 
 		$('[data-toggle="popover"]').popover(); 
@@ -493,63 +475,65 @@
 	       	}  
             
         });
-
-
-        function count_lead_and_limit()
-        {
+	    
+          
+        $(document.body).on('click','.ms-parent input[type=checkbox]',function(){   
         	var inbox_to_pages = $("#inbox_to_pages").val(); 
-        	var previous_thread = $("#previous_thread").val(); // previous thread have to substract when calculate new message sending limt
 
         	$("#submit_post").removeClass('disabled');
        	 	$("#test_send_modal_btn").removeClass('disabled');
        	 	$("#monthly_message_send_limit").hide();
 
+        	var temp;
+        	var temp2;
+        	var count=0;
         	if(inbox_to_pages!=null)
         	{
-        		var fb_page_ids=[];
-        		var i=0;
-        		$.each(inbox_to_pages,function(index,value) {
-        			fb_page_ids[i] = $("#inbox_to_pages option[value="+value+"]").attr('page_id');
-        			i++;
+        		$('.ms-parent input[type=checkbox]:checked').each(function () {
+        			temp = "#inbox_to_pages option[value="+$(this).val()+"]";
+        			if($(this).attr("data-name")!='selectAllinbox_to_pages[]')
+        			{
+        				temp2 = $(temp).attr("data-count");
+	        			temp2=parseInt(temp2);
+	        			count+=temp2;
+        			}
         		});
-
-        		$.ajax({
-			       type:'POST' ,
-			       url: base_url+"facebook_ex_campaign/count_total_inbox",
-			       data: {fb_page_ids:fb_page_ids,previous_thread:previous_thread},
-			       dataType: 'JSON',		      
-			       success:function(response)
-			       { 
-			         if(response.count > 300)
-			       	 {
-			       	 	var custom_campaign_link = "<?php echo base_url('facebook_ex_campaign/custom_campaign'); ?>";
-			       	 	var alert_message = "The list seems large. We highly recommend to split your campaign with small campaign with 300 leads per campaign.For create custom campaign, <a href='"+custom_campaign_link+"'>go here</a>. Anyway we will submit all leads for sending message. But it may happen that facebook prevent sending message to high volume at a time. Use dealy 10 or more for safety.";
-			       	 	$("#alert_div").show().html(alert_message);
-			       	 }
-			       	 else
-			       	 	$("#alert_div").hide();
-
-			       	 $("#thread_count").html(response.count);
-			       	 if(response.message_limit_exceeded=="1") // monthly send limit exceeded
-			       	 {
-			       	 	alert(" Sorry, your monthly limit to send message is exceeded.");
-			       	 	$("#submit_post").addClass('disabled');
-			       	 	$("#test_send_modal_btn").addClass('disabled');
-			       	 	$("#monthly_message_send_limit").show();
-			       	 }
-			       	 else
-			       	 {
-			       	 	$("#submit_post").removeClass('disabled');
-			       	 	$("#test_send_modal_btn").removeClass('disabled');
-			       	 	$("#monthly_message_send_limit").hide();
-			       	 }
-			       }
-		       });
         	}
-        	else $("#thread_count").html("0");
-        }
-	    
-        $(document.body).on('click','.ms-parent input[type=checkbox]',count_lead_and_limit);
+
+        	$("#thread_count").html(count);
+
+    		$.ajax({
+		       type:'POST' ,
+		       url: base_url+"facebook_ex_campaign/multigroup_bulk_limit_count",
+		       data: {no_of_request:count},
+		       dataType: 'JSON',		      
+		       success:function(response)
+		       { 
+		       	 if(count > 300)
+		       	 {
+		       	 	var custom_campaign_link = "<?php echo base_url('facebook_ex_campaign/custom_campaign'); ?>";
+		       	 	var alert_message = "The list seems large. We highly recommend to split your campaign with small campaign with 300 leads per campaign.For create custom campaign, <a href='"+custom_campaign_link+"'>go here</a>. Anyway we will submit all leads for sending message. But it may happen that facebook prevent sending message to high volume at a time. Use dealy 10 or more for safety.";
+		       	 	$("#alert_div").show().html(alert_message);
+		       	 }
+		       	 else	$("#alert_div").hide();
+
+		       	 if(response.message_limit_exceeded=="1") // monthly send limit exceeded
+		       	 {
+		       	 	alert(" Sorry, your monthly limit to send message is exceeded.");
+		       	 	$("#submit_post").addClass('disabled');
+		       	 	$("#test_send_modal_btn").addClass('disabled');
+		       	 	$("#monthly_message_send_limit").show();
+		       	 }
+		       	 else
+		       	 {
+		       	 	$("#submit_post").removeClass('disabled');
+		       	 	$("#test_send_modal_btn").removeClass('disabled');
+		       	 	$("#monthly_message_send_limit").hide();
+		       	 }
+		       }
+    		});
+    		
+        });
 
         
         $('.do_not_send_autocomplete').tokenize({
@@ -612,7 +596,7 @@
         	
         	if(inbox_to_pages==null)
         	{
-        		alert("Please select pages to create inbox campaign.");
+        		alert("Please select groups to create inbox campaign.");
         		return;
         	}
         	
@@ -641,7 +625,7 @@
 		      var queryString = new FormData($("#inbox_campaign_form")[0]);
 		      $.ajax({
 			       type:'POST' ,
-			       url: base_url+"facebook_ex_campaign/edit_multipage_campaign_action",
+			       url: base_url+"facebook_ex_campaign/edit_multigroup_campaign_action",
 			       data: queryString,
 			       cache: false,
 			       contentType: false,

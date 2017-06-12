@@ -1,6 +1,6 @@
 <?php 
 $config['default_page_url'] = 'page/blank';
-$config['product_version'] = 'v1.1';
+$config['product_version'] = 'v2.1';
 
 $config['institute_address1'] = 'XerOne IT';
 $config['institute_address2'] = 'Rajshahi,Bangladesh';

@@ -77,10 +77,10 @@
 						<div class="form-group col-xs-12 col-md-6">
 							<label>
 								Delay time (seconds)
-								 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Delay time" data-content="Delay time is the delay between two successive message send. It is very important because without a delay time facebook may treat bulk sending as spam.  Put input integer value in seconds upto 10 secs. Keep it '0' to get random delay."><i class='fa fa-info-circle'></i> </a>
+								 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Delay time" data-content="Delay time is the delay between two successive message send. It is very important because without a delay time facebook may treat bulk sending as spam.   Keep it '0' to get random delay."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<br/>
-							<input name="delay_time" value="<?php echo $xdata[0]["delay_time"];?>" min="0" max="10" id="delay_time" type="number"><br/> 0 means random
+							<input name="delay_time" value="<?php echo $xdata[0]["delay_time"];?>" min="0"  id="delay_time" type="number"><br/> 0 means random
 						</div>
 
 						<div class="form-group col-xs-12 col-md-6">

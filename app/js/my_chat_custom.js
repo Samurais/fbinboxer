@@ -5,9 +5,10 @@ function appendHtml(el, str) {
     el.appendChild(div.children[0]);
   }
 }
-var html = '<div id="loadhere"></div>';
-appendHtml(document.body, html);
 
+// var html = '<div id="mostofa_chat_load"></div>';
+
+// appendHtml(document.body, html);
 
 		var website_code = document.querySelector("script#domain_fb_statnow").getAttribute("data-name");
 		
@@ -17,7 +18,7 @@ appendHtml(document.body, html);
 		xmlhttp.onreadystatechange = function() {
 		    if (xmlhttp.readyState == XMLHttpRequest.DONE) {
 		        if(xmlhttp.status == 200){
-		           var node = document.getElementById('loadhere');
+		           var node = document.getElementById('mostofa_chat_load');
 					 node.innerHTML=xmlhttp.responseText;
 		        }else{
 		            console.log('Error: ' + xmlhttp.statusText )

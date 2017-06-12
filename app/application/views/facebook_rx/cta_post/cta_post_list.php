@@ -36,9 +36,6 @@ $only_message_button = $this->uri->segment(3);
 							<th field="cta_button" sortable="true">CTA Button</th>
 							<th field="scheduled_at" align="center" sortable="true">Scheduled at</th>
 							<th field="status" align="center" sortable="true">Status</th>
-							<?php if($this->session->userdata('user_type') == 'Admin'|| in_array(72,$this->module_access)) :?>
-							<th field="insight" align="center" sortable="true">Insight</th>
-							<?php endif;?>
 							<th field="visit_post" align="center" sortable="true">Visit Post</th>
 							<th field="delete" align="center" sortable="true">Delete</th>
 							<th field="message_formatted" >Message</th>

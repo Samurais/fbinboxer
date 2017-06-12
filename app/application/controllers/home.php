@@ -2090,11 +2090,44 @@ class home extends CI_Controller
           //  curl_setopt($ch, CURLOPT_COOKIEJAR, "my_cookies.txt");
            // curl_setopt($ch, CURLOPT_COOKIEFILE, "my_cookies.txt");
             
-            $content = curl_exec($ch); // run the whole process
-            
+            $content = curl_exec($ch); // run the whole process 
             curl_close($ch);
+
+            return json_encode($response);
             
-            return $content;
+    }
+
+
+    function get_general_content_with_checking($url,$proxy=""){
+            
+            
+            $ch = curl_init(); // initialize curl handle
+           /* curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_VERBOSE, 0);*/
+            curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/4.0 (compatible;)");
+            curl_setopt($ch, CURLOPT_AUTOREFERER, false);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 7);
+            curl_setopt($ch, CURLOPT_REFERER, 'http://'.$url);
+            curl_setopt($ch, CURLOPT_URL, $url); // set url to post to
+            curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);// allow redirects
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // return into a variable
+            curl_setopt($ch, CURLOPT_TIMEOUT, 50); // times out after 50s
+            curl_setopt($ch, CURLOPT_POST, 0); // set POST method
+
+         
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+          //  curl_setopt($ch, CURLOPT_COOKIEJAR, "my_cookies.txt");
+           // curl_setopt($ch, CURLOPT_COOKIEFILE, "my_cookies.txt");
+            
+            $content = curl_exec($ch); // run the whole process 
+            $response['content'] = $content;
+
+            $res = curl_getinfo($ch);
+            if($res['http_code'] != 200)
+                $response['error'] = 'error';
+            curl_close($ch);
+            return json_encode($response);
             
     }
 
@@ -2166,54 +2199,68 @@ class home extends CI_Controller
     }
 
 
-    public function code_activation_check_action($purchase_code,$only_domain)
+    public function code_activation_check_action($purchase_code,$only_domain,$periodic=0)
     {
-       $url = "http://xeroneit.net/development/envato_license_activation/purchase_code_check.php?purchase_code={$purchase_code}&domain={$only_domain}&item_name=FB Inboxer";
+       $url = "http://xeroneit.net/development/envato_license_activation/purchase_code_check.php?purchase_code={$purchase_code}&domain={$only_domain}&item_name=FBInboxer";
 
-        $credentials = $this->get_general_content($url);
-        $decoded_credentials = json_decode($credentials);
-        if($decoded_credentials->status == 'success'){
-            $content_to_write = array(
-                'is_active' => md5($purchase_code),
-                'purchase_code' => $purchase_code,
-                'item_name' => $decoded_credentials->item_name,
-                'buy_at' => $decoded_credentials->buy_at,
-                'licence_type' => $decoded_credentials->license,
-                'domain' => $only_domain,
-                'checking_date'=>date('Y-m-d')
-                );
-            $config_json_content_to_write = json_encode($content_to_write);
-            file_put_contents(APPPATH.'config/licence.txt', $config_json_content_to_write, LOCK_EX);
+        $credentials = $this->get_general_content_with_checking($url);
+        $decoded_credentials = json_decode($credentials,true);
 
-            $content_to_write['is_active'] = md5(md5($purchase_code));
-            $core_json_content_to_write = json_encode($content_to_write);
-            file_put_contents(APPPATH.'core/licence.txt', $core_json_content_to_write, LOCK_EX);
+        if(!isset($decoded_credentials['error']))
+        {
+            $content = json_decode($decoded_credentials['content'],true);
+            if($content['status'] == 'success')
+            {
+                $content_to_write = array(
+                    'is_active' => md5($purchase_code),
+                    'purchase_code' => $purchase_code,
+                    'item_name' => $content['item_name'],
+                    'buy_at' => $content['buy_at'],
+                    'licence_type' => $content['license'],
+                    'domain' => $only_domain,
+                    'checking_date'=>date('Y-m-d')
+                    );
+                $config_json_content_to_write = json_encode($content_to_write);
+                file_put_contents(APPPATH.'config/licence.txt', $config_json_content_to_write, LOCK_EX);
+
+                $content_to_write['is_active'] = md5(md5($purchase_code));
+                $core_json_content_to_write = json_encode($content_to_write);
+                file_put_contents(APPPATH.'core/licence.txt', $core_json_content_to_write, LOCK_EX);
 
 
-            // added by mostofa 06/03/2017
-            $license_type = $decoded_credentials->license;
-            if($license_type != 'Regular License')
-                $str = $purchase_code."_double";
+                // added by mostofa 06/03/2017
+                $license_type = $content['license'];
+                if($license_type != 'Regular License')
+                    $str = $purchase_code."_double";
+                else
+                    $str = $purchase_code."_single";
+
+                $encrypt_method = "AES-256-CBC";
+                $secret_key = 't8Mk8fsJMnFw69FGG5';
+                $secret_iv = '9fljzKxZmMmoT358yZ';
+                $key = hash('sha256', $secret_key);   
+                $string = $str; 
+                $iv = substr(hash('sha256', $secret_iv), 0, 16);    
+                $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
+                $encoded = base64_encode($output);
+                file_put_contents(APPPATH.'core/licence_type.txt', $encoded, LOCK_EX);
+
+                return json_encode("success");
+
+            } else {
+                if(file_exists(APPPATH.'core/licence.txt')) unlink(APPPATH.'core/licence.txt');
+                return json_encode($content);
+            }
+        }
+        else
+        {
+            if($periodic == 1)
+                return json_encode("success");
             else
-                $str = $purchase_code."_single";
-
-            $encrypt_method = "AES-256-CBC";
-            $secret_key = 't8Mk8fsJMnFw69FGG5';
-            $secret_iv = '9fljzKxZmMmoT358yZ';
-            $key = hash('sha256', $secret_key);   
-            $string = $str; 
-            $iv = substr(hash('sha256', $secret_iv), 0, 16);    
-            $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
-            $encoded = base64_encode($output);
-            file_put_contents(APPPATH.'core/licence_type.txt', $encoded, LOCK_EX);
-
-
-
-            return json_encode("success");
-
-        } else {
-            if(file_exists(APPPATH.'core/licence.txt')) unlink(APPPATH.'core/licence.txt');
-            return json_encode($decoded_credentials);
+            {
+                $response['reason'] = "cURL is not working properly, please contact with your hosting provider.";
+                return json_encode($response);
+            }
         }
     }
 
@@ -2223,19 +2270,19 @@ class home extends CI_Controller
 
         if($today%7==0){
 
-          if(file_exists(APPPATH.'config/licence.txt') && file_exists(APPPATH.'core/licence.txt')){
+            if(file_exists(APPPATH.'config/licence.txt') && file_exists(APPPATH.'core/licence.txt')){
                 $config_existing_content = file_get_contents(APPPATH.'config/licence.txt');
                 $config_decoded_content = json_decode($config_existing_content, true);
                 $last_check_date= $config_decoded_content['checking_date'];
                 $purchase_code  = $config_decoded_content['purchase_code'];
                 $base_url = base_url();
-                $domain_name    = get_domain_only($base_url);
+                $domain_name  = get_domain_only($base_url);
 
                 if( strtotime(date('Y-m-d')) != strtotime($last_check_date)){
-                    $this->code_activation_check_action($purchase_code,$domain_name);         
+                    $this->code_activation_check_action($purchase_code,$domain_name,$periodic=1);         
                 }
+            }
         }
-     }
     }
 
     public function php_info($code="0")
@@ -2579,12 +2626,12 @@ class home extends CI_Controller
         $file_data_array = json_decode($file_data, true);
 
         $purchase_code = $file_data_array['purchase_code'];
-        $purchase_code = "d43664a3-e9b3-41ab-8f36-0c9e11a80d69";
 
         $url = "http://xeroneit.net/development/envato_license_activation/regular_or_extended_check_r.php?purchase_code={$purchase_code}";
 
-        $credentials = $this->get_general_content($url);
+        $credentials = $this->get_general_content_with_checking($url);
         $response = json_decode($credentials, true);
+        $response = json_decode($response['content'],true);
 
         if(isset($response['status']))
         {

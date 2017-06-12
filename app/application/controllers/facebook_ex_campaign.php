@@ -171,6 +171,80 @@ class facebook_ex_campaign extends Home
         $this->_viewcontroller($data);
     }
 
+     public function create_multigroup_campaign()
+    {
+        $data['body'] = "facebook_ex/campaign/add_multigroup_campaign";
+        $data['page_title'] = $this->lang->line("Multigroup campaign");
+        // $page_info = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"),"user_id"=>$this->user_id,"current_subscribed_lead_count > "=>0)),array("page_id","page_name","id"));
+        $data["time_zone"]= $this->_time_zone_list();
+        // $data['page_info'] = $page_info;
+        $data['emotion_list'] = $this->get_emotion_list();
+        $data["campaign_limit_status"]=$this->_check_usage($module_id=76,$request=1);  // for checking monthly campaign limit
+
+
+        $user_id = $this->user_id;
+        $table_type = 'facebook_rx_conversion_contact_group';   
+        $where_type['where'] = array('user_id'=>$user_id);
+        $info_type = $this->basic->get_data($table_type,$where_type,$select='', $join='', $limit='', $start='', $order_by='group_name');  
+        $result = array();
+        $group_name =array();
+
+        $dropdown=array();
+        $str='<select multiple="multiple"  class="form-control" id="inbox_to_pages" name="inbox_to_pages[]">';
+        foreach ($info_type as  $value) 
+        {
+            $search_key = $value['id'];
+            $search_type = $value['group_name'];
+            $where_simple=array('facebook_rx_conversion_user_list.user_id'=>$this->user_id,'permission'=>'1');
+            $where_simple['facebook_rx_fb_page_info.user_id'] = $this->user_id;
+            $where_simple['facebook_rx_fb_page_info.deleted'] = '0';;
+            $this->db->where("FIND_IN_SET('$search_key',facebook_rx_conversion_user_list.contact_group_id) !=", 0);
+            $where=array('where'=>$where_simple);
+            // $this->db->select("count(facebook_rx_conversion_user_list.id) as number_count",false);  
+            $select=array("facebook_rx_conversion_user_list.*");    
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=facebook_rx_conversion_user_list.page_id,left");   
+            $group_by = "id";
+            $contact_details=$this->basic->get_data('facebook_rx_conversion_user_list', $where, $select, $join, $limit='', $start='', $order_by='facebook_rx_conversion_user_list.client_username', $group_by);
+        
+            // foreach ($contact_details as $key2 => $value2) 
+            // {
+            //     if($value2['number_count']>0)
+            //     {
+            //         $xcount= isset($dropdown[$search_key]['count']) ? $dropdown[$search_key]['count'] : 0;
+            //         $dropdown[$search_key]['count']=$value2['number_count']+$xcount;
+            //         $group_name = $search_type." (". $dropdown[$search_key]['count'].")";
+            //         $dropdown[$search_key]['group_name']=$group_name;
+            //     }                            
+            // }      
+
+            $contact_count[$search_key]=0;
+            foreach ($contact_details as $key2 => $value2) 
+            {
+                $temp=explode(',', $value2["contact_group_id"]);
+                if(in_array($search_key, $temp))
+                $contact_count[$search_key]++;
+            } 
+            if($contact_count[$search_key]>0)
+            {
+                $temp_count=$contact_count[$search_key];
+                $temp_group_name=$search_type." (".$temp_count.")";
+                $str.= "<option data-count='".$temp_count."' value='{$search_key}'>".$temp_group_name."</option>";  
+            }
+             
+        }
+        $str.='</select>';    
+        
+        // foreach ($dropdown as $key => $value) 
+        // {
+        //     $str.= "<option data-count='".$value['count']."' value='{$key}'>".$value['group_name']."</option>";   
+        // }
+
+        $data['group_dropdown']=$str;   
+
+        $this->_viewcontroller($data);
+    }
+
+
     
     /********* SAMPLE REPORT FIELD FORMAT********/
     /*array
@@ -229,7 +303,7 @@ class facebook_ex_campaign extends Home
 
         $delay_time = $this->input->post("delay_time");
         if($delay_time=="") $delay_time = 0;
-        if($delay_time>15) $delay_time = 15;
+        // if($delay_time>15) $delay_time = 15;
         $unsubscribe_button = $this->input->post("unsubscribe_button");
 
         if($schedule_type == "now") $posting_status = "2";        
@@ -484,6 +558,97 @@ class facebook_ex_campaign extends Home
         $this->_viewcontroller($data);
     }
 
+
+     public function edit_multigroup_campaign($id=0)
+    {
+        if($id==0) exit();
+
+        $data['body'] = "facebook_ex/campaign/edit_multigroup_campaign";
+        $data['page_title'] = $this->lang->line("Edit multigroup campaign");
+        // $page_info = $this->basic->get_data("facebook_rx_fb_page_info",array("where"=>array("facebook_rx_fb_user_info_id"=>$this->session->userdata("facebook_rx_fb_user_info"),"user_id"=>$this->user_id,"current_subscribed_lead_count > "=>0)),array("page_id","page_name","id"));
+        $data["time_zone"]= $this->_time_zone_list();
+        // $data['page_info'] = $page_info;
+        $data['emotion_list'] = $this->get_emotion_list();
+        $data["xdata"] = $this->basic->get_data("facebook_ex_conversation_campaign",array("where"=>array("id"=>$id,"user_id"=>$this->user_id)));
+
+        // only pending campaigns are editable
+        if(!isset($data["xdata"][0]["posting_status"]) || $data["xdata"][0]["posting_status"]!='0' ) exit();
+
+        $previous_exclude = isset($data["xdata"][0]["do_not_send_to"]) ? json_decode($data["xdata"][0]["do_not_send_to"],true) : array();
+        $thread_count = isset($data["xdata"][0]["total_thread"]) ? $data["xdata"][0]["total_thread"] : 0;
+
+        $data["xdo_not_send_to"]=array();
+        if(count($previous_exclude)>0)
+        $data["xdo_not_send_to"] = $this->basic->get_data("facebook_rx_conversion_user_list",array("where_in"=>array("client_thread_id"=>$previous_exclude,"user_id"=>$this->user_id)));
+        
+        $xinbox_to_groups=isset($data["xdata"][0]["group_ids"]) ? $data["xdata"][0]["group_ids"] : "";
+        $xinbox_to_groups_array=explode(',',$xinbox_to_groups);
+
+        $user_id = $this->user_id;
+        $table_type = 'facebook_rx_conversion_contact_group';   
+        $where_type['where'] = array('user_id'=>$user_id);
+        $info_type = $this->basic->get_data($table_type,$where_type,$select='', $join='', $limit='', $start='', $order_by='group_name');  
+        $result = array();
+        $group_name =array();
+
+        $dropdown=array();
+        $str='<select multiple="multiple"  class="form-control" id="inbox_to_pages" name="inbox_to_pages[]">';
+        foreach ($info_type as  $value) 
+        {
+            $search_key = $value['id'];
+            $search_type = $value['group_name'];
+            $where_simple=array('facebook_rx_conversion_user_list.user_id'=>$this->user_id,'permission'=>'1');
+            $where_simple['facebook_rx_fb_page_info.user_id'] = $this->user_id;
+            $where_simple['facebook_rx_fb_page_info.deleted'] = '0';;
+            $this->db->where("FIND_IN_SET('$search_key',facebook_rx_conversion_user_list.contact_group_id) !=", 0);
+            $where=array('where'=>$where_simple);
+            // $this->db->select("count(facebook_rx_conversion_user_list.id) as number_count",false);  
+            $select=array("facebook_rx_conversion_user_list.*");    
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=facebook_rx_conversion_user_list.page_id,left");   
+            $group_by = "id";
+            $contact_details=$this->basic->get_data('facebook_rx_conversion_user_list', $where, $select, $join, $limit='', $start='', $order_by='facebook_rx_conversion_user_list.client_username', $group_by);
+        
+            // foreach ($contact_details as $key2 => $value2) 
+            // {
+            //     if($value2['number_count']>0)
+            //     {  
+            //         $xcount= isset($dropdown[$search_key]['count']) ? $dropdown[$search_key]['count'] : 0;
+            //         $dropdown[$search_key]['count']=$value2['number_count']+$xcount;
+            //         $group_name = $search_type." (". $dropdown[$search_key]['count'].")";
+            //         $dropdown[$search_key]['group_name']=$group_name;
+            //     }                            
+            // }  
+
+            $contact_count[$search_key]=0;
+            foreach ($contact_details as $key2 => $value2) 
+            {
+                $temp=explode(',', $value2["contact_group_id"]);
+                if(in_array($search_key, $temp))
+                $contact_count[$search_key]++;
+            } 
+            if($contact_count[$search_key]>0)
+            {
+                $temp_count=$contact_count[$search_key];
+                $temp_group_name=$search_type." (".$temp_count.")";
+                $selected="";
+                if(in_array($search_key, $xinbox_to_groups_array)) $selected="selected='selected'";
+                $str.= "<option {$selected} data-count='".$temp_count."' value='{$search_key}'>".$temp_group_name."</option>";  
+            }                  
+        }
+        $str.='</select>';  
+        // foreach ($dropdown as $key => $value) 
+        // {
+        //     $selected="";
+        //     if(in_array($key, $xinbox_to_groups_array)) $selected="selected='selected'";
+        //     $str.= "<option {$selected} data-count='".$value['count']."' value='{$key}'>".$value['group_name']."</option>";   
+        // }
+               
+        $data['group_dropdown']=$str;   
+        $data['xthread_count']=$thread_count;   
+
+        $this->_viewcontroller($data);
+    }
+
     public function edit_multipage_campaign_action()
     {           
         if(!$_POST) exit();
@@ -508,7 +673,7 @@ class facebook_ex_campaign extends Home
 
         $delay_time = $this->input->post("delay_time");
         if($delay_time=="") $delay_time = 0;
-        if($delay_time>15) $delay_time = 15;
+        // if($delay_time>15) $delay_time = 15;
         $unsubscribe_button = $this->input->post("unsubscribe_button");
 
         if($schedule_type == "now") $posting_status = "2";        
@@ -879,6 +1044,35 @@ class facebook_ex_campaign extends Home
     }
 
 
+    public function multigroup_bulk_limit_count()
+    {
+       $no_of_request = $this->input->post("no_of_request");
+       $previous_thread = $this->input->post("previous_thread"); // used for edit only , previous thread have to substract when calculate new message sending limt   
+
+       if($previous_thread!="" && $previous_thread>0) // used ony for edit
+       {
+            if($no_of_request > $previous_thread)
+            $no_of_request = $no_of_request - $previous_thread;
+       }
+
+       if($no_of_request=="") $no_of_request=0;
+
+       $message_limit_exceeded=$this->_check_usage($module_id=79,$request=$no_of_request); // checking if user is allowed to send this ammount of message
+       
+       if($message_limit_exceeded=="3")  // monthly limit exceeded
+       {
+           echo json_encode(array("message_limit_exceeded"=>"1"));
+           exit();
+       }
+       else             
+       {
+           echo json_encode(array("message_limit_exceeded"=>"0"));
+           exit();
+       }
+    }
+
+
+
     public function lead_autocomplete($check_permission=1,$page_ids_str="")
     {
        $search_query= $this->input->get('search');
@@ -894,6 +1088,7 @@ class facebook_ex_campaign extends Home
        $this->db->group_by('client_thread_id');
        $this->db->where("facebook_rx_conversion_user_list.user_id",$this->user_id);
        $this->db->where("facebook_rx_fb_page_info.user_id",$this->user_id);
+       $this->db->where("facebook_rx_fb_page_info.deleted",'0');
        $this->db->join("facebook_rx_fb_page_info","facebook_rx_fb_page_info.page_id=facebook_rx_conversion_user_list.page_id",'left');
        
        if($check_permission==1)  // if check permission is 1 then it will only grab subscribed users
@@ -1159,6 +1354,16 @@ class facebook_ex_campaign extends Home
         $data['page_info'] = $page_info;
         $data['emotion_list'] = $this->get_emotion_list();
         $data["campaign_limit_status"]=$this->_check_usage($module_id=76,$request=1);  // for checking monthly campaign limit
+
+        $table = 'facebook_rx_conversion_contact_group';
+        $where['where'] = array('user_id'=>$this->user_id);
+        $info = $this->basic->get_data($table,$where);
+        foreach ($info as $key => $value) {
+            $result = $value['id'];
+            $data['contact_type_id'][$result] = $value['group_name'];
+        }
+
+
         $this->_viewcontroller($data);
     }
 
@@ -1174,6 +1379,7 @@ class facebook_ex_campaign extends Home
 
 
         $client_username = trim($this->input->post("search_client_username", true));
+        $contact_type_id = trim($this->input->post("contact_type_id", true));
         $page_id = trim($this->input->post("search_page", true)); // fb page id not auto id
         $is_searched = $this->input->post('is_searched', true);
 
@@ -1181,19 +1387,27 @@ class facebook_ex_campaign extends Home
         {
             $this->session->set_userdata('facebook_ex_conversation_custom_username', $client_username);
             $this->session->set_userdata('facebook_ex_conversation_custom_page_id', $page_id);
+            $this->session->set_userdata('facebook_ex_conversation_custom_group', $contact_type_id);
         }
 
         $search_client_username  = $this->session->userdata('facebook_ex_conversation_custom_username');
         $search_page_id  = $this->session->userdata('facebook_ex_conversation_custom_page_id');
+        $contact_group_id  = $this->session->userdata('facebook_ex_conversation_custom_group');
 
         $where_simple=array();
         
         if ($search_client_username) $where_simple['client_username like '] = "%".$search_client_username."%";
         if ($search_page_id) $where_simple['facebook_rx_conversion_user_list.page_id'] = $search_page_id;
+
+        if($contact_group_id) 
+        {
+            $this->db->where("FIND_IN_SET('$contact_group_id',facebook_rx_conversion_user_list.contact_group_id) !=", 0);
+        }
  
         $where_simple['facebook_rx_conversion_user_list.user_id'] = $this->user_id;
         $where_simple['facebook_rx_fb_page_info.user_id'] = $this->user_id;
         $where_simple['facebook_rx_conversion_user_list.permission'] = '1';
+        $where_simple['facebook_rx_fb_page_info.deleted'] = '0';
         $order_by_str=$sort." ".$order;
         $offset = ($page-1)*$rows;
         $where = array('where' => $where_simple);
@@ -1212,12 +1426,16 @@ class facebook_ex_campaign extends Home
 
         }
 
+        if ($contact_group_id) 
+        {
+            $this->db->where("FIND_IN_SET('$contact_group_id',facebook_rx_conversion_user_list.contact_group_id) !=", 0);
+        }
+
         $total_rows_array = $this->basic->count_row($table, $where, $count = "facebook_rx_conversion_user_list.id",$join,'client_thread_id');
         $total_result = $total_rows_array[0]['total_rows'];
 
         echo convert_to_grid_data($info, $total_result);
     }
-
 
     public function create_custom_campaign_action()
     {          
@@ -1248,7 +1466,7 @@ class facebook_ex_campaign extends Home
 
         $delay_time = $this->input->post("delay_time");
         if($delay_time=="") $delay_time = 0;
-        if($delay_time>15) $delay_time = 15;
+        // if($delay_time>15) $delay_time = 15;
         $unsubscribe_button = $this->input->post("unsubscribe_button");
 
 
@@ -1479,6 +1697,576 @@ class facebook_ex_campaign extends Home
         
     }
 
+       public function create_multigroup_campaign_action()
+    {          
+
+        if(!$_POST) exit();
+
+        //************************************************//
+        $status=$this->_check_usage($module_id=76,$request=1); 
+        if($status=="3")  //monthly limit is exceeded, can not create another campaign this month
+        exit();
+        //************************************************//
+
+        ignore_user_abort(TRUE); 
+
+        $page_ids = array();
+        $fb_page_ids = array();
+        $page_ids_names = array();
+        $page_access_tokens = array();     
+        
+        $user_id = $this->user_id;
+        $campaign_name = $this->input->post('campaign_name');
+        $campaign_message = $this->input->post('message');
+        $link = $this->input->post('link');
+        $video_url = $this->input->post('video_url');
+
+        $inbox_to_groups = $this->input->post('inbox_to_pages');
+        if(!is_array($inbox_to_groups)) $inbox_to_groups=array();  
+
+        $lead_list=array();
+        foreach ($inbox_to_groups as $key => $value) 
+        {
+            $where_simple=array('facebook_rx_conversion_user_list.user_id'=>$this->user_id,'permission'=>'1');
+            $where_simple['facebook_rx_fb_page_info.user_id'] = $this->user_id;
+            $where_simple['facebook_rx_fb_page_info.deleted'] = '0';
+            $this->db->where("FIND_IN_SET('$value',facebook_rx_conversion_user_list.contact_group_id) !=", 0);
+            $where=array('where'=>$where_simple);    
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=facebook_rx_conversion_user_list.page_id,left");   
+            $group_by = "id";
+            $contact_details=$this->basic->get_data('facebook_rx_conversion_user_list', $where,$select=array("facebook_rx_conversion_user_list.*","facebook_rx_fb_page_info.page_name","facebook_rx_fb_page_info.id as page_auto_id","facebook_rx_fb_page_info.page_id as fb_page_id","facebook_rx_fb_page_info.page_access_token"), $join, $limit='', $start=NULL, $order_by='client_username asc',$group_by);        
+            foreach ($contact_details as $key2 => $value2) 
+            {
+                $lead_list[] = $value2; 
+                $page_ids[]=$value2["page_auto_id"];               
+                $fb_page_ids[]=$value2["fb_page_id"];               
+                $page_ids_names[$value2["page_auto_id"]]=$value2["page_name"];               
+                $page_access_tokens[$value2["page_auto_id"]]=$value2["page_access_token"];               
+            }
+        }
+
+        $page_ids=array_unique($page_ids);
+        $fb_page_ids=array_unique($fb_page_ids);
+        $page_ids_names=array_unique($page_ids_names);
+        $page_access_tokens=array_unique($page_access_tokens);
+        
+        $do_not_send = $this->input->post('do_not_send');
+        if(!is_array($do_not_send)) $do_not_send = array();
+       
+        $schedule_type = $this->input->post('schedule_type');
+        $schedule_time = $this->input->post('schedule_time');
+        $time_zone = $this->input->post('time_zone');
+
+        $delay_time = $this->input->post("delay_time");
+        if($delay_time=="") $delay_time = 0;
+        // if($delay_time>15) $delay_time = 15;
+        $unsubscribe_button = $this->input->post("unsubscribe_button");
+
+
+        if($schedule_type == "now") $posting_status = "2";        
+        else  $posting_status = "0";     
+
+        $campaign_type= 'lead-wise';          
+        $added_at = date("Y-m-d H:i:s");
+        $is_spam_caught = "0";
+        $successfully_sent = 0;
+        $total_thread = 0;
+       
+        $report = array();
+
+        $send_to_array = array();
+        foreach ($lead_list as $key => $value) 
+        {
+           if(!in_array($value['page_auto_id'], $page_ids))
+           {
+             $page_ids[] = $value['page_auto_id'];
+             $fb_page_ids[] = $value['page_id'];
+           }
+
+           if(in_array($value['client_thread_id'], $do_not_send)) continue;
+
+           if(isset($send_to_array[$value["client_id"]])) continue; // so that same user in different pages does not recieve same message again and again
+           $send_to_array[$value["client_id"]] = 1;
+
+           $total_thread++;
+
+           // $get_page_auto_id = $page_id_association[$value['page_id']]; // page auto id to fb page id convsersion, facebook_rx_conversion_user_list dont have page auto id
+           $report[$value['page_auto_id']][$value['client_thread_id']] = array
+           (
+            "client_username"=>$value["client_username"],
+            "client_id"=>$value["client_id"],
+            "message_sent_id"=>"Pending",
+            "sent_time"=>"Pending",
+            "page_name" => "",
+            "lead_id" => $value["id"]
+            );
+        }
+
+        // print_r($page_ids);
+        // print_r($fb_page_ids);
+        // print_r($page_ids_names);
+        // print_r($page_access_tokens);
+        // print_r($report);
+        // exit();
+
+        $group_ids = implode(',',$inbox_to_groups);
+
+        $campaign_message_db = $campaign_message;
+     
+        $data = array(
+            'user_id' => $user_id,
+            'group_ids'=>$group_ids,
+            'page_ids' => implode(',',$page_ids), // comme seperated page auto id
+            'fb_page_ids' => implode(',',$fb_page_ids), // comme seperated fb page id
+            'page_ids_names' => json_encode($page_ids_names), //page auto id => page name associated array json
+            'do_not_send_to' => json_encode($do_not_send), //exclude thread id array json
+            'campaign_name' => $campaign_name,
+            'campaign_type' => "group-wise",
+            'campaign_message' => $campaign_message_db,
+            'schedule_time' => $schedule_time,
+            'time_zone' => $time_zone,
+            'posting_status' => $posting_status,
+            'is_spam_caught' => $is_spam_caught,
+            'total_thread' => $total_thread,
+            'successfully_sent' => $successfully_sent,
+            'attached_url'=>$link,
+            'attached_video'=>$video_url,
+            'added_at' => $added_at,
+            'report' => json_encode($report), // page and thread array json
+            'unsubscribe_button' => $unsubscribe_button,
+            'delay_time' => $delay_time
+        );
+
+        //************************************************//
+        $status=$this->_check_usage($module_id=79,$request=$total_thread); 
+        if($status=="3")  //monthly limit is exceeded, can not send another ,message this month
+        exit();
+        //************************************************//
+
+        $this->basic->insert_data('facebook_ex_conversation_campaign', $data); // at first campaign is insrted to database , then proccessed
+        $campaign_id= $this->db->insert_id();
+
+        //******************************//
+        // insert data to useges log table
+        $this->_insert_usage_log($module_id=76,$request=1);   
+        //******************************//
+
+        //******************************//
+        // insert data to useges log table (message count)
+        $this->_insert_usage_log($module_id=79,$request=$total_thread);   
+        //******************************//
+  
+        
+        //send now then start sending message 
+        if($schedule_type == "now")
+        {               
+            $i=0;
+            $send_report = array();
+            $is_spam_caught_send = "0"; // is facebook marked this message as spam?
+            $catch_error_count = 0; // catch block error count
+
+            foreach($report as $key=>$value)
+            {           
+                if($catch_error_count>10) break;  // if 10 catch block error then stop sending
+
+                $page_id_send  = $key;
+                foreach ($value as $key2 => $value2) 
+                {
+                    if($catch_error_count>10) break; // if 10 catch block error then stop sending
+
+                    $client_thread_id_send = $key2;
+                    $client_id_send = $value2['client_id'];
+                    $client_username_send = $value2['client_username'];
+                    // added by mostofa at 04/03/2017 
+                    $client_username_send_array = explode(' ', $client_username_send);
+                    $client_last_name = array_pop($client_username_send_array);
+                    $client_first_name = implode(' ', $client_username_send_array);
+
+                    $page_access_token_send = $page_access_tokens[$page_id_send];
+
+                    //  generating message
+                    $campaign_message_send = $campaign_message;
+                    $campaign_message_send = str_replace('#LEAD_USER_NAME#',$client_username_send,$campaign_message_send);
+                    // added by mostofa at 04/03/2017 
+                    $campaign_message_send = str_replace('#LEAD_USER_FIRST_NAME#',$client_first_name,$campaign_message_send);
+                    $campaign_message_send = str_replace('#LEAD_USER_LAST_NAME#',$client_last_name,$campaign_message_send);
+                    
+                    if($video_url!="") $campaign_message_send = $campaign_message_send."\n".$video_url;
+                    else if($link!="") $campaign_message_send = $campaign_message_send."\n".$link;
+
+                    // generate unsubscribe link
+                    if($unsubscribe_button=="1")
+                    {
+                        $code = $this->_random_number_generator(6)."_".$value2["lead_id"]."_".$page_id_send."_".$this->_random_number_generator(6);
+                        $code= base64_encode($code);
+                        $code= urlencode($code);
+                        $unsubscribe_link =$this->config->item("unsubcribe_server_link")."?code=".$code;
+                        $campaign_message_send = $campaign_message_send."\n\nUnsubscribe link : \n".$unsubscribe_link."\n";
+                    }
+                    
+
+                    $error_msg="";
+                    $message_error_code = "";
+                    $message_sent_id = "";
+                    try
+                    {
+                        // echo $client_thread_id_send."<br>";
+                        // echo $campaign_message_send."<br>";
+                        // echo $page_access_token_send;
+                        // exit();
+
+                        $response = $this->fb_rx_login->send_message_to_thread($client_thread_id_send,$campaign_message_send,$page_access_token_send);
+                        if(isset($response['id']))
+                        {
+                            $message_sent_id = $response['id']; 
+                            $successfully_sent++; 
+                        }
+                        else 
+                        {
+                            if(isset($response["error"]["message"])) $message_sent_id = $response["error"]["message"];  
+                            if(isset($response["error"]["code"])) $message_error_code = $response["error"]["code"]; 
+
+                            if($message_error_code=="368") // if facebook marked message as spam 
+                            {
+                                $error_msg=$message_sent_id;
+                                $is_spam_caught_send = "1";
+                            }
+
+                            if($message_error_code=="230") //user blocked page
+                            {
+                                $this->basic->update_data("facebook_rx_conversion_user_list",array("id"=>$value2["lead_id"]),array("permission"=>"0"));
+                                if($this->db->affected_rows()>0)
+                                {
+                                    $this->basic->execute_complex_query("UPDATE facebook_rx_fb_page_info SET current_subscribed_lead_count=current_subscribed_lead_count-1,current_unsubscribed_lead_count=current_unsubscribed_lead_count+1 WHERE id='{$page_id_send}'");
+                                }
+                            }
+
+
+                        } 
+
+                        if($delay_time==0)
+                        sleep(rand(3,12));
+                        else sleep($delay_time);
+
+                        
+                    }
+
+                    catch(Exception $e) 
+                    {
+                      $error_msg = $e->getMessage();
+                      $catch_error_count++;
+                    }
+                    
+                    // generating new report with send message info
+                    $send_report[$page_id_send][$client_thread_id_send] = array
+                    ( 
+                        "client_username"=>$client_username_send,
+                        "client_id"=>$client_id_send,
+                        "message_sent_id"=> $message_sent_id,
+                        "sent_time"=> date("Y-m-d H:i:s"),
+                        "page_name" => $page_ids_names[$page_id_send]
+                    ); 
+
+                    $i++;  
+                    // after 10 send update report in database
+                    if($i%10==0)
+                    {
+                        $send_report_json= json_encode($send_report);
+                        $this->basic->update_data("facebook_ex_conversation_campaign",array("id"=>$campaign_id),array("report"=>$send_report_json,'successfully_sent'=>$successfully_sent,"error_message"=>$error_msg));
+                    }
+                    
+                    if($message_error_code=="368") break;  // if facebook marked message as spam , then stop sending
+                                
+                }
+
+                if($message_error_code=="368") break; // if facebook marked message as spam , then stop sending
+
+                
+            }   
+
+            // everything is done, now update database finally
+            $send_report_json= json_encode($send_report);
+            $this->basic->update_data("facebook_ex_conversation_campaign",array("id"=>$campaign_id),array("report"=>$send_report_json,"posting_status"=>'2','successfully_sent'=>$successfully_sent,'completed_at'=>date("Y-m-d H:i:s"),"is_spam_caught"=>$is_spam_caught_send,"error_message"=>$error_msg));
+
+        } // end of now block
+
+        
+    }
+
+
+    public function edit_multigroup_campaign_action()
+    {           
+        if(!$_POST) exit();
+        ignore_user_abort(TRUE); 
+
+        $page_ids = array();
+        $fb_page_ids = array();
+        $page_ids_names = array();
+        $page_access_tokens = array();    
+        
+
+        $campaign_id = $this->input->post("campaign_id");
+        $previous_thread = $this->input->post("previous_thread");
+        
+        $user_id = $this->user_id;
+        $campaign_name = $this->input->post('campaign_name');
+        $campaign_message = $this->input->post('message');
+        $link = $this->input->post('link');
+        $video_url = $this->input->post('video_url');
+        
+        $inbox_to_groups = $this->input->post('inbox_to_pages');
+        if(!is_array($inbox_to_groups)) $inbox_to_groups=array();  
+
+        $lead_list=array();
+        foreach ($inbox_to_groups as $key => $value) 
+        {
+            $where_simple=array('facebook_rx_conversion_user_list.user_id'=>$this->user_id,'permission'=>'1');
+            $where_simple['facebook_rx_fb_page_info.user_id'] = $this->user_id;
+            $where_simple['facebook_rx_fb_page_info.deleted'] = '0';
+            $this->db->where("FIND_IN_SET('$value',facebook_rx_conversion_user_list.contact_group_id) !=", 0);
+            $where=array('where'=>$where_simple);    
+            $join = array('facebook_rx_fb_page_info'=>"facebook_rx_fb_page_info.page_id=facebook_rx_conversion_user_list.page_id,left");   
+            $group_by = "id";
+            $contact_details=$this->basic->get_data('facebook_rx_conversion_user_list', $where,$select=array("facebook_rx_conversion_user_list.*","facebook_rx_fb_page_info.page_name","facebook_rx_fb_page_info.id as page_auto_id","facebook_rx_fb_page_info.page_id as fb_page_id","facebook_rx_fb_page_info.page_access_token"), $join, $limit='', $start=NULL, $order_by='client_username asc',$group_by);        
+            foreach ($contact_details as $key2 => $value2) 
+            {
+                $lead_list[] = $value2; 
+                $page_ids[]=$value2["page_auto_id"];               
+                $fb_page_ids[]=$value2["fb_page_id"];               
+                $page_ids_names[$value2["page_auto_id"]]=$value2["page_name"];               
+                $page_access_tokens[$value2["page_auto_id"]]=$value2["page_access_token"];               
+            }
+        }
+
+        $page_ids=array_unique($page_ids);
+        $fb_page_ids=array_unique($fb_page_ids);
+        $page_ids_names=array_unique($page_ids_names);
+        $page_access_tokens=array_unique($page_access_tokens);
+        
+        
+        $do_not_send = $this->input->post('do_not_send');
+        if(!is_array($do_not_send)) $do_not_send = array();
+       
+        $schedule_type = $this->input->post('schedule_type');
+        $schedule_time = $this->input->post('schedule_time');
+        $time_zone = $this->input->post('time_zone');
+
+        $delay_time = $this->input->post("delay_time");
+        if($delay_time=="") $delay_time = 0;
+        // if($delay_time>15) $delay_time = 15;
+        $unsubscribe_button = $this->input->post("unsubscribe_button");
+
+        if($schedule_type == "now") $posting_status = "2";        
+        else  $posting_status = "0";     
+
+        $campaign_type= 'page-wise';          
+        $added_at = date("Y-m-d H:i:s");
+        $is_spam_caught = "0";
+        $successfully_sent = 0;
+        $total_thread = 0;
+
+        $send_to_array=array();
+        foreach ($lead_list as $key => $value) 
+        {
+           if(!in_array($value['page_auto_id'], $page_ids))
+           {
+             $page_ids[] = $value['page_auto_id'];
+             $fb_page_ids[] = $value['page_id'];
+           }
+
+           if(in_array($value['client_thread_id'], $do_not_send)) continue;
+
+           if(isset($send_to_array[$value["client_id"]])) continue; // so that same user in different pages does not recieve same message again and again
+           $send_to_array[$value["client_id"]] = 1;
+
+           $total_thread++;
+
+           // $get_page_auto_id = $page_id_association[$value['page_id']]; // page auto id to fb page id convsersion, facebook_rx_conversion_user_list dont have page auto id
+           $report[$value['page_auto_id']][$value['client_thread_id']] = array
+           (
+            "client_username"=>$value["client_username"],
+            "client_id"=>$value["client_id"],
+            "message_sent_id"=>"Pending",
+            "sent_time"=>"Pending",
+            "page_name" => "",
+            "lead_id" => $value["id"]
+            );
+        }
+        $group_ids = implode(',',$inbox_to_groups);
+        $campaign_message_db = $campaign_message;
+     
+        $data = array(
+            'group_ids' => $group_ids, // comme seperated page auto id
+            'page_ids' => implode(',',$page_ids), // comme seperated page auto id
+            'fb_page_ids' => implode(',',$fb_page_ids), // comme seperated fb page id
+            'page_ids_names' => json_encode($page_ids_names), //page auto id => page name associated array json
+            'do_not_send_to' => json_encode($do_not_send), //exclude thread id array json
+            'campaign_name' => $campaign_name,            
+            'campaign_message' => $campaign_message_db,
+            'schedule_time' => $schedule_time,
+            'time_zone' => $time_zone,
+            'posting_status' => $posting_status,
+            'is_spam_caught' => $is_spam_caught,
+            'total_thread' => $total_thread,
+            'successfully_sent' => $successfully_sent,
+            'attached_url'=>$link,
+            'attached_video'=>$video_url,
+            'report' => json_encode($report), // page and thread array json 
+            'delay_time' => $delay_time,
+            'unsubscribe_button' => $unsubscribe_button
+        );
+
+        $current_total_thread = $previous_thread - $total_thread;
+        $current_total_thread_abs = abs($current_total_thread);
+
+
+
+        //************************************************//
+        if($current_total_thread<0)
+        {
+            $status=$this->_check_usage($module_id=79,$request=$total_thread); 
+            if($status=="3")  //monthly limit is exceeded, can not send another ,message this month
+            exit();
+        }
+        //************************************************//
+
+        $this->basic->update_data('facebook_ex_conversation_campaign',array("id"=>$campaign_id,"user_id"=>$this->user_id),$data); // at first campaign is insrted to database , then proccessed
+   
+     
+        //******************************//
+        // insert data to useges log table (message count)
+        if($current_total_thread<0)
+        $this->_insert_usage_log($module_id=79,$request=$current_total_thread_abs);   
+        else $this->_delete_usage_log($module_id=79,$request=$current_total_thread_abs); 
+        //******************************//
+        
+        //send now then start sending message 
+        if($schedule_type == "now")
+        {               
+            $i=0;
+            $send_report = array();
+            $is_spam_caught_send = "0"; // is facebook marked this message as spam?
+            $catch_error_count = 0; // catch block error count
+
+            foreach($report as $key=>$value)
+            {           
+                if($catch_error_count>10) break;  // if 10 catch block error then stop sending
+
+                $page_id_send  = $key;
+                foreach ($value as $key2 => $value2) 
+                {
+                    if($catch_error_count>10) break; // if 10 catch block error then stop sending
+
+                    $client_thread_id_send = $key2;
+                    $client_id_send = $value2['client_id'];
+                    $client_username_send = $value2['client_username'];
+                    // added by mostofa at 04/03/2017 
+                    $client_username_send_array = explode(' ', $client_username_send);
+                    $client_last_name = array_pop($client_username_send_array);
+                    $client_first_name = implode(' ', $client_username_send_array);
+
+                    $page_access_token_send = $page_access_tokens[$page_id_send];
+
+                    //  generating message
+                    $campaign_message_send = $campaign_message;
+                    $campaign_message_send = str_replace('#LEAD_USER_NAME#',$client_username_send,$campaign_message_send);
+                    // added by mostofa at 04/03/2017 
+                    $campaign_message_send = str_replace('#LEAD_USER_FIRST_NAME#',$client_first_name,$campaign_message_send);
+                    $campaign_message_send = str_replace('#LEAD_USER_LAST_NAME#',$client_last_name,$campaign_message_send);
+
+                    if($video_url!="") $campaign_message_send = $campaign_message_send."\n".$video_url;
+                    else if($link!="") $campaign_message_send = $campaign_message_send."\n".$link;
+
+                    // generate unsubscribe link
+                    if($unsubscribe_button=="1")
+                    {
+                        $code = $this->_random_number_generator(6)."_".$value2["lead_id"]."_".$page_id_send."_".$this->_random_number_generator(6);
+                        $code= base64_encode($code);
+                        $code= urlencode($code);
+                        $unsubscribe_link =$this->config->item("unsubcribe_server_link")."?code=".$code;
+                        $campaign_message_send = $campaign_message_send."\n\nUnsubscribe link : \n".$unsubscribe_link."\n";
+                    }
+
+                    $error_msg="";
+                    $message_error_code = "";
+                    $message_sent_id = "";
+                    try
+                    {
+                        $response = $this->fb_rx_login->send_message_to_thread($client_thread_id_send,$campaign_message_send,$page_access_token_send);
+                        if(isset($response['id']))
+                        {
+                            $message_sent_id = $response['id']; 
+                            $successfully_sent++; 
+                        }
+                        else 
+                        {
+                            if(isset($response["error"]["message"])) $message_sent_id = $response["error"]["message"];  
+                            if(isset($response["error"]["code"])) $message_error_code = $response["error"]["code"]; 
+
+                            if($message_error_code=="368") // if facebook marked message as spam 
+                            {
+                                $error_msg=$message_sent_id;
+                                $is_spam_caught_send = "1";
+                            }
+
+                            if($message_error_code=="230") //user blocked page
+                            {
+                                $this->basic->update_data("facebook_rx_conversion_user_list",array("id"=>$value2["lead_id"]),array("permission"=>"0"));
+                                if($this->db->affected_rows()>0)
+                                {
+                                    $this->basic->execute_complex_query("UPDATE facebook_rx_fb_page_info SET current_subscribed_lead_count=current_subscribed_lead_count-1,current_unsubscribed_lead_count=current_unsubscribed_lead_count+1 WHERE id='{$page_id_send}'");
+                                }
+                            }
+                        }  
+
+                        if($delay_time==0)
+                        sleep(rand(3,12));
+                        else sleep($delay_time);                 
+                        
+                    }
+
+                    catch(Exception $e) 
+                    {
+                      $error_msg = $e->getMessage();
+                      $catch_error_count++;
+                    }
+                    
+                    // generating new report with send message info
+                    $send_report[$page_id_send][$client_thread_id_send] = array
+                    ( 
+                        "client_username"=>$client_username_send,
+                        "client_id"=>$client_id_send,
+                        "message_sent_id"=> $message_sent_id,
+                        "sent_time"=> date("Y-m-d H:i:s"),
+                        "page_name" => $page_ids_names[$page_id_send]
+                    ); 
+
+                    $i++;  
+                    // after 10 send update report in database
+                    if($i%10==0)
+                    {
+                        $send_report_json= json_encode($send_report);
+                        $this->basic->update_data("facebook_ex_conversation_campaign",array("id"=>$campaign_id),array("report"=>$send_report_json,'successfully_sent'=>$successfully_sent,"error_message"=>$error_msg));
+                    }
+
+                    if($message_error_code=="368") break;  // if facebook marked message as spam , then stop sending
+                                
+                }
+
+                if($message_error_code=="368") break; // if facebook marked message as spam , then stop sending
+
+                
+            }   
+
+            // everything is done, now update database finally
+            $send_report_json= json_encode($send_report);
+            $this->basic->update_data("facebook_ex_conversation_campaign",array("id"=>$campaign_id),array("report"=>$send_report_json,"posting_status"=>'2','successfully_sent'=>$successfully_sent,'completed_at'=>date("Y-m-d H:i:s"),"is_spam_caught"=>$is_spam_caught_send,"error_message"=>$error_msg));
+         
+        } // end of now block
+
+        
+    }
+
     public function delete_campaign()
     {   
         if(!$_POST) exit();
@@ -1546,7 +2334,7 @@ class facebook_ex_campaign extends Home
 
         $delay_time = $this->input->post("delay_time");
         if($delay_time=="") $delay_time = 0;
-        if($delay_time>15) $delay_time = 15;
+        // if($delay_time>15) $delay_time = 15;
         $unsubscribe_button = $this->input->post("unsubscribe_button");
         
         $data = array(

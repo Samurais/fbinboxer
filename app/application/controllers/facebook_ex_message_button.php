@@ -35,7 +35,7 @@ class facebook_ex_message_button extends Home
     {
         $data['body'] = "facebook_ex/message_button/generate_message_button";
         $data['page_title'] = $this->lang->line("Send Message Button");
-        $page_info = $this->db->query("SELECT username,page_name FROM `facebook_rx_fb_page_info` WHERE facebook_rx_fb_user_info_id = '".$this->session->userdata("facebook_rx_fb_user_info")."'")->result_array();
+        $page_info = $this->db->query("SELECT username,page_name,page_id FROM `facebook_rx_fb_page_info` WHERE facebook_rx_fb_user_info_id = '".$this->session->userdata("facebook_rx_fb_user_info")."' AND deleted='0'")->result_array();
         $data['page_info'] = $page_info;
         $this->_viewcontroller($data);
     }

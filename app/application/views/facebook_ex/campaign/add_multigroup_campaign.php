@@ -2,24 +2,20 @@
 	<div class="col-xs-12 col-md-7 padding-10">
 		<div class="box box-primary">
 			<div class="box-header ui-sortable-handle  text-center" style="cursor: move;margin-bottom: 0px;">
-				<i class="fa fa-pencil"></i>
-				<h3 class="box-title">Edit Multi-page Campaign</h3>
+				<i class="fa fa-paper-plane"></i>
+				<h3 class="box-title">Multi-group Campaign</h3>
 				<!-- tools box -->
 				<div class="pull-right box-tools"></div><!-- /. tools -->
 			</div>
 			<div class="box-body">
-				<img class="wait_few_seconds center-block" src="<?php echo base_url("assets/pre-loader/Fading squares2.gif");?>" alt="">
 				<form action="#" enctype="multipart/form-data" id="inbox_campaign_form" method="post">
 					<div class="form-group">
 						<label>
 							Campaign Name 
 							<a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Campaign Name" data-content="Put a name so that you can identify it later"><i class='fa fa-info-circle'></i> </a>
 						</label>
-						<input type="text" value="<?php echo $xdata[0]["campaign_name"];?>" class="form-control"  name="campaign_name" id="campaign_name">
-						<input type="hidden" value="<?php echo $xdata[0]["id"];?>" class="form-control"  name="campaign_id" id="campaign_id">
-						<input type="hidden" value="<?php echo $xdata[0]["total_thread"];?>" class="form-control"  name="previous_thread" id="previous_thread">
+						<input type="text" class="form-control"  name="campaign_name" id="campaign_name">
 					</div>
-					
 					<div class="form-group">
 						<label>
 							Message *
@@ -32,8 +28,8 @@
 						<span class='pull-right'> 
 							<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Include lead user first name"" data-content="You can include #LEAD_USER_FIRST_NAME# variable inside your message. The variable will be replaced by real names when we will send it."><i class='fa fa-info-circle'></i> </a> 
 							<a title="Include lead user name" class='btn btn-default btn-sm' id="lead_first_name"><i class='fa fa-user'></i> Include "First Name"</a>
-						</span>
-						<textarea class="form-control" name="message" id="message" placeholder="Type your message here..." style="height:170px;"><?php echo $xdata[0]["campaign_message"];?></textarea>
+						</span>	
+						<textarea class="form-control" name="message" id="message" placeholder="Type your message here..." style="height:170px;"></textarea>
 						<div class='text-center' id="emotion_container"><?php echo $emotion_list;?></div>
 					</div>
 					
@@ -42,7 +38,7 @@
 							Paste URL <br/><small>(will be attached & previewed)</small>
 							<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Paste URL" data-content="Paste any url, make sure your url contains http:// or https://. This url will be attched after your message with preview."><i class='fa fa-info-circle'></i> </a>
 						</label>
-						<input value="<?php echo $xdata[0]["attached_url"];?>" class="form-control" name="link" id="link"  type="text" placeholder="http://example.com">
+						<input class="form-control" name="link" id="link"  type="text" placeholder="http://example.com">
 					</div>	
 
 					<div class="form-group col-xs-12 col-md-1 text-center">
@@ -55,7 +51,7 @@
 							Paste Youtube Video URL  <br/><small>(will be attached & previewed)</small>
 							<a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Paste Youtube Video URL" data-content="Paste any Youtube video URL, make sure your youtube url looks like https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID. This video url will be attched after your message with preview."><i class='fa fa-info-circle'></i> </a>
 						</label>
-						<input value="<?php echo $xdata[0]["attached_video"];?>" class="form-control" name="video_url" id="video_url" type="text" placeholder="https://www.youtube.com/watch?v=VIDEO_ID"> 
+						<input class="form-control" name="video_url" id="video_url" type="text" placeholder="https://www.youtube.com/watch?v=VIDEO_ID"> 
 					</div>
 
 					<br/>
@@ -64,32 +60,13 @@
 					<br/><br/>
 					
 					<div class="alert alert-danger text-center" id="alert_div" style="display: none; font-size: 600;"></div>
-					
 					<div class="form-group">
 						<label style="width:100%">
-							Choose pages *
-							 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Choose Pages" data-content="Choose one or more pages to create campaign. This message will send to all your active leads of pages you choose now. You can use 'Do not send message to these leads' field below to unlist any list only from this campaign. To unlist any specific lead permanently, please go to 'Import Lead > Lead List' and unsubscribe the lead, he/she will not recieve any other message until he/she is subscribed again. The value of 'Total Lead Selected' label may different than the original create form, because lead counts are dynamic and change over time."><i class='fa fa-info-circle'></i> </a>
-							 <span class='label label-info pull-right' style="padding:3px 8px;font-size:13px;-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px;">Total Lead Selected : <span id="thread_count"><?php echo $xdata[0]["total_thread"];?></span></span>
+							Choose Groups *
+							 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Choose Pages" data-content="Choose one or more groups to create campaign. This message will send to all your active leads of groups you choose now. You can use 'Do not send message to these leads' field below to unlist any list only from this campaign. To unlist any specific lead permanently, please go to 'Import Lead > Lead List' and unsubscribe the lead, he/she will not recieve any other message until he/she is subscribed again. System will filter multiple instances of same lead for same campaign, means one user will not recieve same campaign message multiple times."><i class='fa fa-info-circle'></i> </a>
+							 <span class='label label-info pull-right' style="padding:3px 8px;font-size:13px;-webkit-border-radius: 10px;-moz-border-radius: 10px;border-radius: 10px;">Total Lead Selected : <span id="thread_count">0</span></span>
 						</label>
-						<?php
-							$xdata_page_ids = isset($xdata[0]["page_ids"]) ? $xdata[0]["page_ids"] : "";
-							$xdata_fb_page_ids = isset($xdata[0]["fb_page_ids"]) ? $xdata[0]["fb_page_ids"] : "";
-							$page_ids_explode = explode(',', $xdata_page_ids);
-							$fb_page_ids_explode = explode(',', $xdata_fb_page_ids);
-						?>
-						<select multiple="multiple"  class="form-control" id="inbox_to_pages" name="inbox_to_pages[]">	
-						<?php							
-							foreach($page_info as $key=>$val)
-							{	
-								$id=$val['id'];
-								$page_name=$val['page_name'];
-								$page_id=$val['page_id'];
-								if(in_array($id, $page_ids_explode) && in_array($page_id, $fb_page_ids_explode))
-								echo "<option selected value='{$id}-{$page_id}' page_id='{$page_id}'>{$page_name}</option>";								
-								else echo "<option value='{$id}-{$page_id}' page_id='{$page_id}'>{$page_name}</option>";								
-							}
-						 ?>						
-						</select>
+						<?php echo $group_dropdown; ?>
 						
 					</div>
 
@@ -98,13 +75,7 @@
                        		Exclude these leads
                         	<a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Do not send message to these leads" data-content="You can choose one or more. The leads you choose here will be unlisted form this campaign and will not recieve this message. Start typing a lead name, it's auto-complete."><i class='fa fa-info-circle'></i> </a>
                         </label>
-                        <select style="width:100px;"  name="do_not_send[]" id="do_not_send" multiple="multiple" class="tokenize-sample form-control do_not_send_autocomplete"> 
-                        <?php 
-                       		foreach ($xdo_not_send_to as $key => $value) 
-                       		{
-                       			echo  "<option selected value='".$value["client_thread_id"]."'>".$value["client_username"]."</option>";
-                       		}
-                        ?>                                    
+                        <select style="width:100px;"  name="do_not_send[]" id="do_not_send" multiple="multiple" class="tokenize-sample form-control do_not_send_autocomplete">                                     
                         </select>
                     </div> 	
 
@@ -112,20 +83,20 @@
 						<div class="form-group col-xs-12 col-md-6">
 							<label>
 								Delay time (seconds)
-								 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Delay time" data-content="Delay time is the delay between two successive message send. It is very important because without a delay time facebook may treat bulk sending as spam.   Keep it '0' to get random delay."><i class='fa fa-info-circle'></i> </a>
+								 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Delay time" data-content="Delay time is the delay between two successive message send. It is very important because without a delay time facebook may treat bulk sending as spam. Keep it '0' to get random delay."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<br/>
-							<input name="delay_time" value="<?php echo $xdata[0]["delay_time"];?>" min="0"  id="delay_time" type="number"><br/> 0 means random
+							<input name="delay_time" value="0" min="0" id="delay_time" type="number"><br/> 0 means random
 						</div>
 
 						<div class="form-group col-xs-12 col-md-6">
 							<label>
 								Embed unsubscribe link
-								 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Embed unsusbcribe link with message" data-content="You can embed 'unsubscribe link' with the message you send. Just enable it and system will automaticallly add the link at the bottom. Clicking the link will unsubscribe the lead. You can use your own method to serve this purpose if you want."><i class='fa fa-info-circle'></i> </a>
+								 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Embed unsubscribe link with message" data-content="You can embed 'unsubscribe link' with the message you send. Just enable it and system will automaticallly add the link at the bottom. Clicking the link will unsubscribe the lead. You can use your own method to serve this purpose if you want."><i class='fa fa-info-circle'></i> </a>
 							</label>
 							<br/>
-							<input name="unsubscribe_button" value="0" id="unsubscribe_button_disable" <?php if($xdata[0]["unsubscribe_button"]=="0") echo "checked";?> type="radio"> Disable &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-							<input name="unsubscribe_button" value="1" id="unsubscribe_button_enable" <?php if($xdata[0]["unsubscribe_button"]=="1") echo "checked";?> type="radio"> Enable 
+							<input name="unsubscribe_button" value="0" id="unsubscribe_button_disable" checked type="radio"> Disable &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+							<input name="unsubscribe_button" value="1" id="unsubscribe_button_enable" type="radio"> Enable 
 						</div>
 					</div>
 
@@ -138,13 +109,13 @@
 							 <a href="#" data-placement="top" data-toggle="popover" data-trigger="focus" title="Schedule" data-content="You can either send message now or can schedule it later. If you want to sed later the schedule it and system will automatically process this campaign as time and time zone mentioned. Schduled campaign may take upto 1 hour lomger than your schedule time depending on server's processing.."><i class='fa fa-info-circle'></i> </a>
 						</label>
 						<br/>
-						<input name="schedule_type" value="now" id="schedule_now"  type="radio"> Now &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-						<input name="schedule_type" value="later" id="schedule_later" checked type="radio"> Later 
+						<input name="schedule_type" value="now" id="schedule_now" checked type="radio"> Now &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<input name="schedule_type" value="later" id="schedule_later" type="radio"> Later 
 					</div>
 
 					<div class="form-group schedule_block_item col-xs-12 col-md-6">
 						<label>Schedule time  <a href="#" data-placement="top"  data-toggle="popover" data-trigger="focus" title="Schedule Time" data-content="Select date and time when you want to process this campaign."><i class='fa fa-info-circle'></i> </a></label>
-						<input placeholder="Time" value="<?php echo $xdata[0]["schedule_time"];?>"  name="schedule_time" id="schedule_time" class="form-control datepicker" type="text"/>
+						<input placeholder="Time"  name="schedule_time" id="schedule_time" class="form-control datepicker" type="text"/>
 					</div>
 
 					<div class="form-group schedule_block_item col-xs-12 col-md-6">
@@ -154,7 +125,7 @@
 						</label>
 						<?php
 						$time_zone[''] = 'Please Select';
-						echo form_dropdown('time_zone',$time_zone,$xdata[0]["time_zone"],' class="form-control" id="time_zone" required'); 
+						echo form_dropdown('time_zone',$time_zone,set_value('time_zone'),' class="form-control" id="time_zone" required'); 
 						?>
 					</div>					 
 
@@ -162,9 +133,10 @@
 
 					<div class="box-footer clearfix">
 						<div class="col-xs-12">
-							<button style='width:100%;margin-bottom:10px;' class="btn btn-primary center-block btn-lg" id="submit_post" name="submit_post" type="button"><i class="fa fa-pencil"></i> Edit Campaign </button>
+							<button style='width:100%;margin-bottom:10px;' class="<?php if($campaign_limit_status=="3") echo 'disabled ';?>btn btn-primary center-block btn-lg" id="submit_post" name="submit_post" type="button"><i class="fa fa-send"></i> Submit Campaign </button>
 						</div>
-					</div>					
+					</div>
+					<?php if($campaign_limit_status=="3") echo "<h4><div class='alert alert-danger text-center'><i class='fa fa-remove'></i> Sorry, your monthly limit to create campaign is exceeded. You can not create another campaign this month. <a href='".site_url('payment/usage_history')."'>".$this->lang->line("See usage log")."</a></div></h4>"?>
 					<?php  echo "<h4 id='monthly_message_send_limit'><div class='alert alert-danger text-center'><i class='fa fa-remove'></i> Sorry, your monthly limit to send message is exceeded. <a href='".site_url('payment/usage_history')."'>".$this->lang->line("See usage log")."</a></div></h4>"?>
 
 				</form>
@@ -183,7 +155,7 @@
 				<div class="pull-right box-tools"></div><!-- /. tools -->
 			</div>
 			<div class="box-body preview">					
-				<img class="wait_few_seconds center-block" src="<?php echo base_url("assets/pre-loader/Fading squares2.gif");?>" alt="">
+				
 				<div class="chat_box">
 					<div class="chat_header">
 						<span class='pull-left' id="page_name">Page Name</span>
@@ -262,19 +234,10 @@
 
 		var base_url="<?php echo base_url();?>";
 
-
-		$("#monthly_message_send_limit,#test_loading").hide();
-
-		setTimeout(function() {
-			$(".loading").hide();
-			$(".wait_few_seconds").hide();
-			$("#message,#link,#video_url").blur();
-			count_lead_and_limit();			
-		}, 5000);
-
 		$('[data-toggle="popover"]').popover(); 
 		$('[data-toggle="popover"]').on('click', function(e) {e.preventDefault(); return true;});
 
+		$(".schedule_block_item,#video_thumb,#link_thumb,#preview_message_link,.loading,#monthly_message_send_limit").hide();
 		$(".overlay").hide();
 
 		var today = new Date();
@@ -494,62 +457,64 @@
             
         });
 
-
-        function count_lead_and_limit()
-        {
+	    
+        $(document.body).on('click','.ms-parent input[type=checkbox]',function(){   
         	var inbox_to_pages = $("#inbox_to_pages").val(); 
-        	var previous_thread = $("#previous_thread").val(); // previous thread have to substract when calculate new message sending limt
 
         	$("#submit_post").removeClass('disabled');
        	 	$("#test_send_modal_btn").removeClass('disabled');
        	 	$("#monthly_message_send_limit").hide();
 
+        	var temp;
+        	var temp2;
+        	var count=0;
         	if(inbox_to_pages!=null)
         	{
-        		var fb_page_ids=[];
-        		var i=0;
-        		$.each(inbox_to_pages,function(index,value) {
-        			fb_page_ids[i] = $("#inbox_to_pages option[value="+value+"]").attr('page_id');
-        			i++;
+        		$('.ms-parent input[type=checkbox]:checked').each(function () {
+        			temp = "#inbox_to_pages option[value="+$(this).val()+"]";
+        			if($(this).attr("data-name")!='selectAllinbox_to_pages[]')
+        			{
+        				temp2 = $(temp).attr("data-count");
+	        			temp2=parseInt(temp2);
+	        			count+=temp2;
+        			}
         		});
-
-        		$.ajax({
-			       type:'POST' ,
-			       url: base_url+"facebook_ex_campaign/count_total_inbox",
-			       data: {fb_page_ids:fb_page_ids,previous_thread:previous_thread},
-			       dataType: 'JSON',		      
-			       success:function(response)
-			       { 
-			         if(response.count > 300)
-			       	 {
-			       	 	var custom_campaign_link = "<?php echo base_url('facebook_ex_campaign/custom_campaign'); ?>";
-			       	 	var alert_message = "The list seems large. We highly recommend to split your campaign with small campaign with 300 leads per campaign.For create custom campaign, <a href='"+custom_campaign_link+"'>go here</a>. Anyway we will submit all leads for sending message. But it may happen that facebook prevent sending message to high volume at a time. Use dealy 10 or more for safety.";
-			       	 	$("#alert_div").show().html(alert_message);
-			       	 }
-			       	 else
-			       	 	$("#alert_div").hide();
-
-			       	 $("#thread_count").html(response.count);
-			       	 if(response.message_limit_exceeded=="1") // monthly send limit exceeded
-			       	 {
-			       	 	alert(" Sorry, your monthly limit to send message is exceeded.");
-			       	 	$("#submit_post").addClass('disabled');
-			       	 	$("#test_send_modal_btn").addClass('disabled');
-			       	 	$("#monthly_message_send_limit").show();
-			       	 }
-			       	 else
-			       	 {
-			       	 	$("#submit_post").removeClass('disabled');
-			       	 	$("#test_send_modal_btn").removeClass('disabled');
-			       	 	$("#monthly_message_send_limit").hide();
-			       	 }
-			       }
-		       });
         	}
-        	else $("#thread_count").html("0");
-        }
-	    
-        $(document.body).on('click','.ms-parent input[type=checkbox]',count_lead_and_limit);
+
+        	$("#thread_count").html(count);
+
+    		$.ajax({
+		       type:'POST' ,
+		       url: base_url+"facebook_ex_campaign/multigroup_bulk_limit_count",
+		       data: {no_of_request:count},
+		       dataType: 'JSON',		      
+		       success:function(response)
+		       { 
+		       	 if(count > 300)
+		       	 {
+		       	 	var custom_campaign_link = "<?php echo base_url('facebook_ex_campaign/custom_campaign'); ?>";
+		       	 	var alert_message = "The list seems large. We highly recommend to split your campaign with small campaign with 300 leads per campaign.For create custom campaign, <a href='"+custom_campaign_link+"'>go here</a>. Anyway we will submit all leads for sending message. But it may happen that facebook prevent sending message to high volume at a time. Use dealy 10 or more for safety.";
+		       	 	$("#alert_div").show().html(alert_message);
+		       	 }
+		       	 else	$("#alert_div").hide();
+
+		       	 if(response.message_limit_exceeded=="1") // monthly send limit exceeded
+		       	 {
+		       	 	alert(" Sorry, your monthly limit to send message is exceeded.");
+		       	 	$("#submit_post").addClass('disabled');
+		       	 	$("#test_send_modal_btn").addClass('disabled');
+		       	 	$("#monthly_message_send_limit").show();
+		       	 }
+		       	 else
+		       	 {
+		       	 	$("#submit_post").removeClass('disabled');
+		       	 	$("#test_send_modal_btn").removeClass('disabled');
+		       	 	$("#monthly_message_send_limit").hide();
+		       	 }
+		       }
+    		});
+    		
+        });
 
         
         $('.do_not_send_autocomplete').tokenize({
@@ -600,7 +565,13 @@
 
 	    $(document.body).on('click','#submit_post',function(){ 
        
-                  	
+            var campaign_limit_status = "<?php echo $campaign_limit_status?>";
+            if(campaign_limit_status=="3")
+            {
+            	alert(" Sorry, your monthly limit to create campaign is exceeded. You can not create another campaign this month.");
+            	return;
+            }
+        	
     		if($("#message").val()=="" && $("#link").val()==""&&  $("#video_url").val()=="")
     		{
     			alert("Please type a message or paste url/video url. System can not send blank message.");
@@ -612,7 +583,7 @@
         	
         	if(inbox_to_pages==null)
         	{
-        		alert("Please select pages to create inbox campaign.");
+        		alert("Please select groups to create inbox campaign.");
         		return;
         	}
         	
@@ -632,7 +603,7 @@
         	$("#response_modal_content").html(loading);
 
         	var report_link = base_url+"facebook_ex_campaign/campaign_report";
-        	var success_message = "<i class='fa fa-check-circle'></i> Campaign have been updated successfully. <a href='"+report_link+"'> See report</a>";
+        	var success_message = "<i class='fa fa-check-circle'></i> Campaign have been submitted successfully. <a href='"+report_link+"'>See report</a>";
 
         	$("#response_modal_content").removeClass("alert-danger");
          	$("#response_modal_content").addClass("alert-success");
@@ -641,7 +612,7 @@
 		      var queryString = new FormData($("#inbox_campaign_form")[0]);
 		      $.ajax({
 			       type:'POST' ,
-			       url: base_url+"facebook_ex_campaign/edit_multipage_campaign_action",
+			       url: base_url+"facebook_ex_campaign/create_multigroup_campaign_action",
 			       data: queryString,
 			       cache: false,
 			       contentType: false,
@@ -653,26 +624,15 @@
 		      $("#response_modal").modal();
 		      $(this).addClass("disabled");
 
-				// var delay=2000;
-				// setTimeout(function() {
-				// 	window.location.href=report_link;
-				// }, delay);
-
         });
-
- 		//  $('#response_modal').on('hidden.bs.modal', function () { 
-		// var link=base_url+"facebook_ex_campaign/campaign_report";
-		// window.location.assign(link); 
-		// })
 
 
 
     });
 
+
+
 </script>
-
-
-
 <div class="modal fade" id="response_modal" data-backdrop="static" data-keyboard="false">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -688,6 +648,5 @@
 		</div>
 	</div>
 </div>
-
 
 <?php $this->load->view("facebook_ex/campaign/style");?>

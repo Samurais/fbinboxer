@@ -107,7 +107,7 @@
                       else
                       {
                           $type="number";
-                          if($module["id"]=="1") $limit=$this->lang->line("Analysis Limit");
+                          if($module["id"]=="65") $limit=$this->lang->line("Analysis Limit");
                           else $limit=$this->lang->line("Analysis Limit")." / ".$this->lang->line("Month");
                      }
 
